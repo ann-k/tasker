@@ -2,7 +2,7 @@ import { Typography } from '@mui/material';
 
 import { FullSizeCentered } from '@/components/styled';
 
-function Page1() {
+function Process() {
   return (
     <>
       <meta name="title" content="Page 1" />
@@ -13,4 +13,4 @@ function Page1() {
   );
 }
 
-export default Page1;
+export default Process;
