@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
 import BrushIcon from '@mui/icons-material/Brush';
@@ -26,10 +26,19 @@ type Task = {
   hasSubtasks: boolean;
 };
 
+const STORAGE_KEY = 'tasker-tasks';
+
 function Settings() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const savedTasks = localStorage.getItem(STORAGE_KEY);
+    return savedTasks ? JSON.parse(savedTasks) : [];
+  });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }, [tasks]);
 
   const handleAddTask = () => {
     const newTask: Task = {
