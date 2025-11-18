@@ -1,53 +1,125 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
-import BrushIcon from '@mui/icons-material/Brush';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Box,
   Button,
-  IconButton,
   List,
-  ListItem,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
   Typography,
 } from '@mui/material';
-import { Stack } from '@mui/system';
 
-type Task = {
-  id: string;
-  name: string;
-  duration: string;
-  hasSubtasks: boolean;
-};
+import TaskItem, { type Task } from './TaskItem';
 
 const STORAGE_KEY = 'tasker-tasks';
+const DEBOUNCE_DELAY = 500;
 
 function Settings() {
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
   const [tasks, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY);
     return savedTasks ? JSON.parse(savedTasks) : [];
   });
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  const [editingTask, setEditingTask] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
 
+  useEffect(() => {
+    console.log(editingTask);
+    if (editingTask) {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+      debounceTimer.current = setTimeout(() => {
+        setTasks((prevTasks) => {
+          return prevTasks.map((t) => {
+            if (t.id === editingTask.id) {
+              const newTask = { ...t, name: editingTask.name };
+              return newTask;
+            }
+            return t;
+          });
+        });
+        debounceTimer.current = null;
+      }, DEBOUNCE_DELAY);
+    }
+
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, [editingTask]);
+
   const handleAddTask = () => {
+    const newId = Date.now().toString();
+    setEditingTask({ id: newId, name: '' });
+
     const newTask: Task = {
-      id: Date.now().toString(),
-      name: 'Новая задача',
+      id: newId,
+      name: '',
       duration: '1 минута',
       hasSubtasks: false,
     };
-    setTasks([...tasks, newTask]);
+    setTasks((prevTasks) => [...prevTasks, newTask]);
+  };
+
+  const handleNameChange = (value: string) => {
+    setEditingTask((prev) => (prev ? { ...prev, name: value } : null));
+  };
+
+  const handleNameFocus = (taskId: string) => {
+    // Если уже редактируется другая задача, сохраняем её
+    if (editingTask && editingTask.id !== taskId) {
+      const previousTaskId = editingTask.id;
+      const previousName = editingTask.name;
+      // Отменяем debounce для предыдущей задачи
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+        debounceTimer.current = null;
+      }
+      // Сохраняем предыдущую задачу
+      if (previousName) {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.id === previousTaskId ? { ...task, name: previousName } : task,
+          ),
+        );
+      }
+    }
+    // Инициализируем editingTask текущим значением задачи
+    const task = tasks.find((t) => t.id === taskId);
+    const initialName = task?.name ?? '';
+    setEditingTask({ id: taskId, name: initialName });
+  };
+
+  const handleNameBlur = (taskId: string) => {
+    // Обрабатываем blur только для редактируемой задачи
+    if (editingTask?.id !== taskId) return;
+    // Отменяем debounce
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+    }
+    // Сохраняем значение в задачу
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, name: editingTask.name || 'Новая задача' } : task,
+      ),
+    );
+    setEditingTask(null);
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, taskId: string) => {
@@ -61,8 +133,13 @@ function Settings() {
   };
 
   const handleMenuItemClick = (action: string) => {
-    if (action === 'delete') {
-      setTasks(tasks.filter((task) => task.id !== selectedTaskId));
+    if (action === 'delete' && selectedTaskId) {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+        debounceTimer.current = null;
+      }
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== selectedTaskId));
+      if (editingTask?.id === selectedTaskId) setEditingTask(null);
     }
     handleMenuClose();
   };
@@ -92,74 +169,24 @@ function Settings() {
         </Typography>
 
         <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
-          {tasks.map((task) => (
-            <ListItem
-              key={task.id}
-              sx={{
-                px: 1,
-                py: 1.5,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-                '&:last-child': {
-                  borderBottom: 'none',
-                },
-              }}
-              secondaryAction={
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <IconButton edge="end" size="small" sx={{ color: 'text.secondary' }}>
-                    <AddIcon fontSize="small" />
-                  </IconButton>
+          {tasks.map((task) => {
+            const isEditingTask = Boolean(editingTask) && task.id === editingTask?.id;
 
-                  <IconButton
-                    edge="end"
-                    size="small"
-                    sx={{ color: 'text.secondary' }}
-                    onClick={(e) => handleMenuOpen(e, task.id)}
-                  >
-                    <MoreVertIcon fontSize="small" />
-                  </IconButton>
-                </Stack>
-              }
-            >
-              {task.hasSubtasks && (
-                <ListItemIcon sx={{ minWidth: 32, mr: 1 }}>
-                  <ChevronRightIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                </ListItemIcon>
-              )}
-              <ListItemIcon
-                sx={{
-                  minWidth: task.hasSubtasks ? 48 : 40,
-                  mr: 1.5,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1,
-                    bgcolor: 'primary.light',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <BrushIcon sx={{ color: 'primary.main', fontSize: 24 }} />
-                </Box>
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 400 }}>
-                    {task.name}
-                  </Typography>
-                }
-                secondary={
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                    {task.duration}
-                  </Typography>
-                }
+            return (
+              <TaskItem
+                key={task.id}
+                id={task.id}
+                name={isEditingTask ? editingTask.name : task.name}
+                duration={task.duration}
+                hasSubtasks={task.hasSubtasks}
+                isEditing={isEditingTask}
+                onNameChange={handleNameChange}
+                onNameFocus={handleNameFocus}
+                onNameBlur={handleNameBlur}
+                onMenuOpen={handleMenuOpen}
               />
-            </ListItem>
-          ))}
+            );
+          })}
         </List>
 
         <Button
