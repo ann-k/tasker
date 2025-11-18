@@ -27,6 +27,10 @@ import TaskItem, { type Task } from './TaskItem';
 const STORAGE_KEY = 'tasker-tasks';
 const DEBOUNCE_DELAY = 500;
 
+const generateTaskId = (): string => {
+  return Date.now().toString();
+};
+
 function Settings() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -47,7 +51,6 @@ function Settings() {
   }, [tasks]);
 
   useEffect(() => {
-    console.log(editingTask);
     if (editingTask) {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
@@ -73,14 +76,14 @@ function Settings() {
   }, [editingTask]);
 
   const handleAddTask = () => {
-    const newId = Date.now().toString();
+    const newId = generateTaskId();
     setEditingTask({ id: newId, name: '' });
 
     const newTask: Task = {
       id: newId,
       name: '',
       duration: '1 минута',
-      hasSubtasks: false,
+      subtasks: [],
     };
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
@@ -141,17 +144,59 @@ function Settings() {
     setSelectedTaskId(null);
   };
 
+  const findTaskAndDelete = (tasksList: Task[], taskId: string): Task[] => {
+    return tasksList
+      .filter((task) => task.id !== taskId)
+      .map((task) => {
+        if (task.subtasks && task.subtasks.length > 0) {
+          return {
+            ...task,
+            subtasks: findTaskAndDelete(task.subtasks, taskId),
+          };
+        }
+        return task;
+      });
+  };
+
   const handleMenuItemClick = (action: string) => {
     if (action === 'delete' && selectedTaskId) {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
         debounceTimer.current = null;
       }
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== selectedTaskId));
+      setTasks((prevTasks) => findTaskAndDelete(prevTasks, selectedTaskId));
       if (editingTask?.id === selectedTaskId) setEditingTask(null);
     }
 
     handleMenuClose();
+  };
+
+  const findTaskAndAddSubtask = (tasksList: Task[], taskId: string, subtask: Task): Task[] => {
+    return tasksList.map((task) => {
+      if (task.id === taskId) {
+        return {
+          ...task,
+          subtasks: [...(task.subtasks || []), subtask],
+        };
+      }
+      if (task.subtasks && task.subtasks.length > 0) {
+        return {
+          ...task,
+          subtasks: findTaskAndAddSubtask(task.subtasks, taskId, subtask),
+        };
+      }
+      return task;
+    });
+  };
+
+  const handleAddSubtask = (taskId: string) => {
+    const newSubtask: Task = {
+      id: generateTaskId(),
+      name: '',
+      duration: '1 минута',
+      subtasks: [],
+    };
+    setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, taskId, newSubtask));
   };
 
   return (
@@ -188,12 +233,13 @@ function Settings() {
                 id={task.id}
                 name={isEditingTask ? editingTask.name : task.name}
                 duration={task.duration}
-                hasSubtasks={task.hasSubtasks}
+                subtasks={task.subtasks}
                 isEditing={isEditingTask}
                 onNameChange={handleNameChange}
                 onNameFocus={handleNameFocus}
                 onNameBlur={handleNameBlur}
                 onMenuOpen={handleMenuOpen}
+                onAddSubtask={handleAddSubtask}
               />
             );
           })}
