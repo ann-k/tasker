@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
@@ -46,6 +46,37 @@ function Settings() {
     name: string;
   } | null>(null);
 
+  const findTaskInTree = (tasksList: Task[], taskId: string): Task | null => {
+    for (const task of tasksList) {
+      if (task.id === taskId) {
+        return task;
+      }
+      if (task.subtasks && task.subtasks.length > 0) {
+        const found = findTaskInTree(task.subtasks, taskId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const updateTaskInTree = useCallback(
+    (tasksList: Task[], taskId: string, updater: (task: Task) => Task): Task[] => {
+      return tasksList.map((task) => {
+        if (task.id === taskId) {
+          return updater(task);
+        }
+        if (task.subtasks && task.subtasks.length > 0) {
+          return {
+            ...task,
+            subtasks: updateTaskInTree(task.subtasks, taskId, updater),
+          };
+        }
+        return task;
+      });
+    },
+    [],
+  );
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
@@ -55,15 +86,12 @@ function Settings() {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
       debounceTimer.current = setTimeout(() => {
-        setTasks((prevTasks) => {
-          return prevTasks.map((t) => {
-            if (t.id === editingTask.id) {
-              const newTask = { ...t, name: editingTask.name };
-              return newTask;
-            }
-            return t;
-          });
-        });
+        setTasks((prevTasks) =>
+          updateTaskInTree(prevTasks, editingTask.id, (task) => ({
+            ...task,
+            name: editingTask.name,
+          })),
+        );
         debounceTimer.current = null;
       }, DEBOUNCE_DELAY);
     }
@@ -73,7 +101,7 @@ function Settings() {
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [editingTask]);
+  }, [editingTask, updateTaskInTree]);
 
   const handleAddTask = () => {
     const newId = generateTaskId();
@@ -102,17 +130,18 @@ function Settings() {
         clearTimeout(debounceTimer.current);
         debounceTimer.current = null;
       }
-      // Сохраняем предыдущую задачу
+      // Сохраняем предыдущую задачу рекурсивно
       if (previousName) {
         setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === previousTaskId ? { ...task, name: previousName } : task,
-          ),
+          updateTaskInTree(prevTasks, previousTaskId, (task) => ({
+            ...task,
+            name: previousName,
+          })),
         );
       }
     }
-    // Инициализируем editingTask текущим значением задачи
-    const task = tasks.find((t) => t.id === taskId);
+    // Инициализируем editingTask текущим значением задачи (рекурсивный поиск)
+    const task = findTaskInTree(tasks, taskId);
     const initialName = task?.name ?? '';
     setEditingTask({ id: taskId, name: initialName });
   };
@@ -125,11 +154,12 @@ function Settings() {
       clearTimeout(debounceTimer.current);
       debounceTimer.current = null;
     }
-    // Сохраняем значение в задачу
+    // Сохраняем значение в задачу рекурсивно
     setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, name: editingTask.name || 'Новая задача' } : task,
-      ),
+      updateTaskInTree(prevTasks, taskId, (task) => ({
+        ...task,
+        name: editingTask.name || 'Новая задача',
+      })),
     );
     setEditingTask(null);
   };
@@ -190,13 +220,31 @@ function Settings() {
   };
 
   const handleAddSubtask = (taskId: string) => {
+    // Сохраняем текущую редактируемую задачу, если она есть
+    if (editingTask) {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+        debounceTimer.current = null;
+      }
+      // Сохраняем предыдущую задачу рекурсивно
+      setTasks((prevTasks) =>
+        updateTaskInTree(prevTasks, editingTask.id, (task) => ({
+          ...task,
+          name: editingTask.name || 'Новая задача',
+        })),
+      );
+    }
+
+    const newSubtaskId = generateTaskId();
     const newSubtask: Task = {
-      id: generateTaskId(),
+      id: newSubtaskId,
       name: '',
       duration: '1 минута',
       subtasks: [],
     };
     setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, taskId, newSubtask));
+    // Устанавливаем новую подзадачу в режим редактирования
+    setEditingTask({ id: newSubtaskId, name: '' });
   };
 
   return (
@@ -234,7 +282,7 @@ function Settings() {
                 name={isEditingTask ? editingTask.name : task.name}
                 duration={task.duration}
                 subtasks={task.subtasks}
-                isEditing={isEditingTask}
+                editingTaskId={editingTask?.id ?? null}
                 onNameChange={handleNameChange}
                 onNameFocus={handleNameFocus}
                 onNameBlur={handleNameBlur}

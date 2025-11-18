@@ -29,7 +29,7 @@ const TaskItem = ({
   name,
   duration,
   subtasks,
-  isEditing,
+  editingTaskId,
   onNameChange,
   onNameFocus,
   onNameBlur,
@@ -41,7 +41,7 @@ const TaskItem = ({
   name: string;
   duration: string;
   subtasks?: Task[];
-  isEditing: boolean;
+  editingTaskId?: string | null;
   onNameChange: (value: string) => void;
   onNameFocus: (taskId: string) => void;
   onNameBlur: (taskId: string) => void;
@@ -52,10 +52,15 @@ const TaskItem = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
+  const isEditing = editingTaskId === id;
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus();
+      // Небольшая задержка для гарантии, что элемент уже в DOM
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isEditing, inputRef]);
 
@@ -194,7 +199,7 @@ const TaskItem = ({
                 name={subtask.name}
                 duration={subtask.duration}
                 subtasks={subtask.subtasks}
-                isEditing={isEditing}
+                editingTaskId={editingTaskId}
                 onNameChange={onNameChange}
                 onNameFocus={onNameFocus}
                 onNameBlur={onNameBlur}
