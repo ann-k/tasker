@@ -37,16 +37,20 @@ const CreateTaskDialog = ({
   onConfirm,
   selectedDuration,
   onDurationSelect,
+  mode,
 }: {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
   selectedDuration: string;
   onDurationSelect: (duration: string) => void;
+  mode: 'create' | 'edit';
 }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Создать новую задачу</DialogTitle>
+      <DialogTitle>
+        {mode === 'create' ? 'Создать новую задачу' : 'Задать длительность'}
+      </DialogTitle>
       <DialogContent>
         <Typography sx={{ mb: 2 }}>Выберите длительность задачи:</Typography>
 
@@ -77,7 +81,7 @@ const CreateTaskDialog = ({
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>
         <Button onClick={onConfirm} variant="contained" autoFocus>
-          Создать
+          {mode === 'create' ? 'Создать' : 'Сохранить'}
         </Button>
       </DialogActions>
     </Dialog>

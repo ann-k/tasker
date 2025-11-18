@@ -50,6 +50,8 @@ function Settings() {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<string>('1 минута');
+  const [durationDialogMode, setDurationDialogMode] = useState<'create' | 'edit'>('create');
+  const [editingDurationTaskId, setEditingDurationTaskId] = useState<string | null>(null);
 
   const findTaskInTree = (tasksList: Task[], taskId: string): Task | null => {
     for (const task of tasksList) {
@@ -110,12 +112,15 @@ function Settings() {
 
   const handleAddTaskClick = () => {
     setSelectedDuration('1 минута');
+    setDurationDialogMode('create');
+    setEditingDurationTaskId(null);
     setIsCreateDialogOpen(true);
   };
 
   const handleCreateDialogClose = () => {
     setIsCreateDialogOpen(false);
     setSelectedDuration('1 минута');
+    setEditingDurationTaskId(null);
   };
 
   const handleDurationSelect = (duration: string) => {
@@ -123,19 +128,42 @@ function Settings() {
   };
 
   const handleCreateDialogConfirm = () => {
-    const newId = generateTaskId();
-    setEditingTask({ id: newId, name: '' });
+    if (durationDialogMode === 'edit' && editingDurationTaskId) {
+      // Обновляем длительность существующей задачи
+      setTasks((prevTasks) =>
+        updateTaskInTree(prevTasks, editingDurationTaskId, (task) => ({
+          ...task,
+          duration: selectedDuration,
+        })),
+      );
+    } else {
+      // Создаем новую задачу
+      const newId = generateTaskId();
+      setEditingTask({ id: newId, name: '' });
 
-    const newTask: Task = {
-      id: newId,
-      name: '',
-      duration: selectedDuration,
-      status: 'to-do',
-      subtasks: [],
-    };
-    setTasks((prevTasks) => [...prevTasks, newTask]);
+      const newTask: Task = {
+        id: newId,
+        name: '',
+        duration: selectedDuration,
+        status: 'to-do',
+        subtasks: [],
+      };
+      setTasks((prevTasks) => [...prevTasks, newTask]);
+    }
     setIsCreateDialogOpen(false);
     setSelectedDuration('1 минута');
+    setEditingDurationTaskId(null);
+  };
+
+  const handleSetDuration = (taskId: string) => {
+    const task = findTaskInTree(tasks, taskId);
+    if (task) {
+      setSelectedDuration(task.duration);
+      setDurationDialogMode('edit');
+      setEditingDurationTaskId(taskId);
+      setIsCreateDialogOpen(true);
+    }
+    handleMenuClose();
   };
 
   const handleNameChange = (value: string) => {
@@ -372,7 +400,7 @@ function Settings() {
 
                   <Divider />
 
-                  <MenuItem onClick={() => handleMenuItemClick('set-duration', task.id)}>
+                  <MenuItem onClick={() => handleSetDuration(task.id)}>
                     <ListItemIcon>
                       <AccessTimeIcon fontSize="small" />
                     </ListItemIcon>
@@ -431,6 +459,7 @@ function Settings() {
           onConfirm={handleCreateDialogConfirm}
           selectedDuration={selectedDuration}
           onDurationSelect={handleDurationSelect}
+          mode={durationDialogMode}
         />
       </Box>
     </>
