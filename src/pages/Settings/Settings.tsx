@@ -22,6 +22,7 @@ import {
   Typography,
 } from '@mui/material';
 
+import CreateTaskDialog from './CreateTaskDialog';
 import TaskItem, { type Task } from './TaskItem';
 
 const STORAGE_KEY = 'tasker-tasks';
@@ -46,6 +47,9 @@ function Settings() {
     id: string;
     name: string;
   } | null>(null);
+
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState<string>('1 минута');
 
   const findTaskInTree = (tasksList: Task[], taskId: string): Task | null => {
     for (const task of tasksList) {
@@ -104,18 +108,34 @@ function Settings() {
     };
   }, [editingTask, updateTaskInTree]);
 
-  const handleAddTask = () => {
+  const handleAddTaskClick = () => {
+    setSelectedDuration('1 минута');
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleCreateDialogClose = () => {
+    setIsCreateDialogOpen(false);
+    setSelectedDuration('1 минута');
+  };
+
+  const handleDurationSelect = (duration: string) => {
+    setSelectedDuration(duration);
+  };
+
+  const handleCreateDialogConfirm = () => {
     const newId = generateTaskId();
     setEditingTask({ id: newId, name: '' });
 
     const newTask: Task = {
       id: newId,
       name: '',
-      duration: '1 минута',
+      duration: selectedDuration,
       status: 'to-do',
       subtasks: [],
     };
     setTasks((prevTasks) => [...prevTasks, newTask]);
+    setIsCreateDialogOpen(false);
+    setSelectedDuration('1 минута');
   };
 
   const handleNameChange = (value: string) => {
@@ -395,7 +415,7 @@ function Settings() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={handleAddTask}
+          onClick={handleAddTaskClick}
           sx={{
             mt: 2,
             py: 1.5,
@@ -404,6 +424,14 @@ function Settings() {
         >
           Добавить задачу
         </Button>
+
+        <CreateTaskDialog
+          open={isCreateDialogOpen}
+          onClose={handleCreateDialogClose}
+          onConfirm={handleCreateDialogConfirm}
+          selectedDuration={selectedDuration}
+          onDurationSelect={handleDurationSelect}
+        />
       </Box>
     </>
   );
