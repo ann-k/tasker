@@ -21,6 +21,7 @@ export type Task = {
   id: string;
   name: string;
   duration: string;
+  status: 'to-do' | 'doing' | 'done';
   subtasks?: Task[];
 };
 

@@ -112,6 +112,7 @@ function Settings() {
       id: newId,
       name: '',
       duration: '1 минута',
+      status: 'to-do',
       subtasks: [],
     };
     setTasks((prevTasks) => [...prevTasks, newTask]);
@@ -241,6 +242,7 @@ function Settings() {
       id: newSubtaskId,
       name: '',
       duration: '1 минута',
+      status: 'to-do',
       subtasks: [],
     };
     setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, taskId, newSubtask));
