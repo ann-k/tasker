@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ImageIcon from '@mui/icons-material/Image';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import {
   Box,
   Button,
+  Divider,
   List,
   ListItemIcon,
   ListItemText,
@@ -141,6 +150,7 @@ function Settings() {
       setTasks((prevTasks) => prevTasks.filter((task) => task.id !== selectedTaskId));
       if (editingTask?.id === selectedTaskId) setEditingTask(null);
     }
+
     handleMenuClose();
   };
 
@@ -211,11 +221,71 @@ function Settings() {
             horizontal: 'right',
           }}
         >
+          <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
+            <ListItemIcon>
+              <ImageIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Загрузить картинку</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
+            <ListItemIcon>
+              <AutoAwesomeIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>ИИ картинка</ListItemText>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={() => handleMenuItemClick('add-subtask')}>
+            <ListItemIcon>
+              <AddIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Добавить подзадачу</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
+            <ListItemIcon>
+              <ViewListIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>ИИ декомпозиция</ListItemText>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={() => handleMenuItemClick('set-duration')}>
+            <ListItemIcon>
+              <AccessTimeIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Задать длительность</ListItemText>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={() => handleMenuItemClick('navigate')}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                width: '100%',
+                justifyContent: 'center',
+              }}
+            >
+              <ArrowDownwardIcon fontSize="small" />
+              <ArrowUpwardIcon fontSize="small" />
+              <ChevronLeftIcon fontSize="small" />
+              <ChevronRightIcon fontSize="small" />
+            </Box>
+          </MenuItem>
+
+          <Divider />
+
           <MenuItem onClick={() => handleMenuItemClick('delete')}>
             <ListItemIcon>
               <DeleteIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Удалить</ListItemText>
+            <ListItemText>Удалить задачу</ListItemText>
           </MenuItem>
         </Menu>
       </Box>
