@@ -35,6 +35,7 @@ function Settings() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
 
   const [tasks, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY);
@@ -188,13 +189,13 @@ function Settings() {
       });
   };
 
-  const handleMenuItemClick = (action: string) => {
-    if (action === 'delete' && selectedTaskId) {
+  const handleMenuItemClick = (action: string, taskId: string) => {
+    if (action === 'delete') {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
         debounceTimer.current = null;
       }
-      setTasks((prevTasks) => findTaskAndDelete(prevTasks, selectedTaskId));
+      setTasks((prevTasks) => findTaskAndDelete(prevTasks, taskId));
       if (editingTask?.id === selectedTaskId) setEditingTask(null);
     }
 
@@ -243,8 +244,24 @@ function Settings() {
       subtasks: [],
     };
     setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, taskId, newSubtask));
+
+    // Автоматически раскрываем задачу при добавлении подзадачи
+    setExpandedTasks((prev) => new Set(prev).add(taskId));
+
     // Устанавливаем новую подзадачу в режим редактирования
     setEditingTask({ id: newSubtaskId, name: '' });
+  };
+
+  const handleToggleExpand = (taskId: string) => {
+    setExpandedTasks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(taskId)) {
+        newSet.delete(taskId);
+      } else {
+        newSet.add(taskId);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -276,19 +293,99 @@ function Settings() {
             const isEditingTask = Boolean(editingTask) && task.id === editingTask?.id;
 
             return (
-              <TaskItem
-                key={task.id}
-                id={task.id}
-                name={isEditingTask ? editingTask.name : task.name}
-                duration={task.duration}
-                subtasks={task.subtasks}
-                editingTaskId={editingTask?.id ?? null}
-                onNameChange={handleNameChange}
-                onNameFocus={handleNameFocus}
-                onNameBlur={handleNameBlur}
-                onMenuOpen={handleMenuOpen}
-                onAddSubtask={handleAddSubtask}
-              />
+              <>
+                <TaskItem
+                  key={task.id}
+                  id={task.id}
+                  name={isEditingTask ? editingTask.name : task.name}
+                  duration={task.duration}
+                  subtasks={task.subtasks}
+                  editingTaskId={editingTask?.id ?? null}
+                  expandedTasks={expandedTasks}
+                  onToggleExpand={handleToggleExpand}
+                  onNameChange={handleNameChange}
+                  onNameFocus={handleNameFocus}
+                  onNameBlur={handleNameBlur}
+                  onMenuOpen={handleMenuOpen}
+                  onAddSubtask={handleAddSubtask}
+                />
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                >
+                  <MenuItem onClick={() => handleMenuItemClick('upload-image', task.id)}>
+                    <ListItemIcon>
+                      <ImageIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Загрузить картинку</ListItemText>
+                  </MenuItem>
+
+                  <MenuItem onClick={() => handleMenuItemClick('ai-image', task.id)}>
+                    <ListItemIcon>
+                      <AutoAwesomeIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>ИИ картинка</ListItemText>
+                  </MenuItem>
+
+                  <Divider />
+
+                  <MenuItem onClick={() => handleAddSubtask(task.id)}>
+                    <ListItemIcon>
+                      <AddIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Добавить подзадачу</ListItemText>
+                  </MenuItem>
+
+                  <MenuItem onClick={() => handleMenuItemClick('ai-decomposition', task.id)}>
+                    <ListItemIcon>
+                      <ViewListIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>ИИ декомпозиция</ListItemText>
+                  </MenuItem>
+
+                  <Divider />
+
+                  <MenuItem onClick={() => handleMenuItemClick('set-duration', task.id)}>
+                    <ListItemIcon>
+                      <AccessTimeIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Задать длительность</ListItemText>
+                  </MenuItem>
+
+                  <Divider />
+
+                  <MenuItem onClick={() => handleMenuItemClick('navigate', task.id)}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        gap: 2,
+                        alignItems: 'center',
+                        width: '100%',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <ArrowDownwardIcon fontSize="small" />
+                      <ArrowUpwardIcon fontSize="small" />
+                      <ChevronLeftIcon fontSize="small" />
+                      <ChevronRightIcon fontSize="small" />
+                    </Box>
+                  </MenuItem>
+
+                  <Divider />
+
+                  <MenuItem onClick={() => handleMenuItemClick('delete', task.id)}>
+                    <ListItemIcon>
+                      <DeleteIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Удалить задачу</ListItemText>
+                  </MenuItem>
+                </Menu>
+              </>
             );
           })}
         </List>
@@ -305,83 +402,6 @@ function Settings() {
         >
           Добавить задачу
         </Button>
-
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-        >
-          <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
-            <ListItemIcon>
-              <ImageIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Загрузить картинку</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
-            <ListItemIcon>
-              <AutoAwesomeIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>ИИ картинка</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem onClick={() => handleMenuItemClick('add-subtask')}>
-            <ListItemIcon>
-              <AddIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Добавить подзадачу</ListItemText>
-          </MenuItem>
-
-          <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
-            <ListItemIcon>
-              <ViewListIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>ИИ декомпозиция</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem onClick={() => handleMenuItemClick('set-duration')}>
-            <ListItemIcon>
-              <AccessTimeIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Задать длительность</ListItemText>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem onClick={() => handleMenuItemClick('navigate')}>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                alignItems: 'center',
-                width: '100%',
-                justifyContent: 'center',
-              }}
-            >
-              <ArrowDownwardIcon fontSize="small" />
-              <ArrowUpwardIcon fontSize="small" />
-              <ChevronLeftIcon fontSize="small" />
-              <ChevronRightIcon fontSize="small" />
-            </Box>
-          </MenuItem>
-
-          <Divider />
-
-          <MenuItem onClick={() => handleMenuItemClick('delete')}>
-            <ListItemIcon>
-              <DeleteIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Удалить задачу</ListItemText>
-          </MenuItem>
-        </Menu>
       </Box>
     </>
   );

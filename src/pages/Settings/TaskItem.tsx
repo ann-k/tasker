@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
 import BrushIcon from '@mui/icons-material/Brush';
@@ -30,6 +30,8 @@ const TaskItem = ({
   duration,
   subtasks,
   editingTaskId,
+  expandedTasks,
+  onToggleExpand,
   onNameChange,
   onNameFocus,
   onNameBlur,
@@ -42,6 +44,8 @@ const TaskItem = ({
   duration: string;
   subtasks?: Task[];
   editingTaskId?: string | null;
+  expandedTasks: Set<string>;
+  onToggleExpand: (taskId: string) => void;
   onNameChange: (value: string) => void;
   onNameFocus: (taskId: string) => void;
   onNameBlur: (taskId: string) => void;
@@ -50,9 +54,9 @@ const TaskItem = ({
   level?: number;
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isEditing = editingTaskId === id;
+  const isExpanded = expandedTasks.has(id);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -66,15 +70,11 @@ const TaskItem = ({
 
   const handleChevronClick = () => {
     onNameBlur(id);
-    setIsExpanded((prev) => !prev);
+    onToggleExpand(id);
   };
 
   const handleAddSubtaskClick = () => {
-    onNameBlur(id);
     onAddSubtask(id);
-
-    // Автоматически раскрываем задачу при добавлении подзадачи
-    if (!isExpanded) setIsExpanded(true);
   };
 
   return (
@@ -200,6 +200,8 @@ const TaskItem = ({
                 duration={subtask.duration}
                 subtasks={subtask.subtasks}
                 editingTaskId={editingTaskId}
+                expandedTasks={expandedTasks}
+                onToggleExpand={onToggleExpand}
                 onNameChange={onNameChange}
                 onNameFocus={onNameFocus}
                 onNameBlur={onNameBlur}
