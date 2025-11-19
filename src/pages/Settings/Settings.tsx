@@ -252,13 +252,15 @@ function Settings() {
     reader.readAsDataURL(file);
   };
 
-  const handleMenuItemClick = (action: string, taskId: string) => {
+  const handleMenuItemClick = (action: string) => {
+    if (!selectedTaskId) return;
+
     if (action === 'delete') {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
         debounceTimer.current = null;
       }
-      setTasks((prevTasks) => findTaskAndDelete(prevTasks, taskId));
+      setTasks((prevTasks) => findTaskAndDelete(prevTasks, selectedTaskId));
       if (editingTask?.id === selectedTaskId) setEditingTask(null);
     } else if (action === 'upload-image') {
       const input = document.createElement('input');
@@ -266,8 +268,8 @@ function Settings() {
       input.accept = 'image/*';
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) {
-          handleImageUpload(taskId, file);
+        if (file && selectedTaskId) {
+          handleImageUpload(selectedTaskId, file);
         }
       };
       input.click();
@@ -395,14 +397,14 @@ function Settings() {
                     horizontal: 'right',
                   }}
                 >
-                  <MenuItem onClick={() => handleMenuItemClick('upload-image', task.id)}>
+                  <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
                     <ListItemIcon>
                       <ImageIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>Загрузить картинку</ListItemText>
                   </MenuItem>
 
-                  <MenuItem onClick={() => handleMenuItemClick('ai-image', task.id)}>
+                  <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
                     <ListItemIcon>
                       <AutoAwesomeIcon fontSize="small" />
                     </ListItemIcon>
@@ -411,14 +413,14 @@ function Settings() {
 
                   <Divider />
 
-                  <MenuItem onClick={() => handleAddSubtask(task.id)}>
+                  <MenuItem onClick={() => selectedTaskId && handleAddSubtask(selectedTaskId)}>
                     <ListItemIcon>
                       <AddIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText>Добавить подзадачу</ListItemText>
                   </MenuItem>
 
-                  <MenuItem onClick={() => handleMenuItemClick('ai-decomposition', task.id)}>
+                  <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
                     <ListItemIcon>
                       <ViewListIcon fontSize="small" />
                     </ListItemIcon>
@@ -427,7 +429,7 @@ function Settings() {
 
                   <Divider />
 
-                  <MenuItem onClick={() => handleSetDuration(task.id)}>
+                  <MenuItem onClick={() => selectedTaskId && handleSetDuration(selectedTaskId)}>
                     <ListItemIcon>
                       <AccessTimeIcon fontSize="small" />
                     </ListItemIcon>
@@ -436,7 +438,7 @@ function Settings() {
 
                   <Divider />
 
-                  <MenuItem onClick={() => handleMenuItemClick('navigate', task.id)}>
+                  <MenuItem onClick={() => handleMenuItemClick('navigate')}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -455,7 +457,7 @@ function Settings() {
 
                   <Divider />
 
-                  <MenuItem onClick={() => handleMenuItemClick('delete', task.id)}>
+                  <MenuItem onClick={() => handleMenuItemClick('delete')}>
                     <ListItemIcon>
                       <DeleteIcon fontSize="small" />
                     </ListItemIcon>
