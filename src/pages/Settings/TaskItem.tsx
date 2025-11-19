@@ -60,6 +60,7 @@ const TaskItem = ({
   level?: number;
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isEditing = editingTaskId === id;
   const isExpanded = expandedTasks.has(id);
@@ -168,48 +169,47 @@ const TaskItem = ({
               />
             </Box>
           )}
-          <Box
-            component="label"
+          <IconButton
+            size="small"
+            onClick={() => {
+              fileInputRef.current?.click();
+            }}
             sx={{
-              position: 'relative',
               width: 40,
               height: 40,
-              borderRadius: 1,
               bgcolor: 'primary.light',
               flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s',
               '&:hover': {
                 bgcolor: 'primary.main',
                 '& .MuiSvgIcon-root': {
                   color: 'primary.contrastText',
                 },
               },
+              '&:focus-visible': {
+                outline: '3px solid #1976d2 !important',
+                outlineOffset: '2px !important',
+                boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.3) !important',
+              },
             }}
             aria-label={image ? 'Изменить изображение' : 'Загрузить изображение'}
           >
-            <BrushIcon sx={{ color: 'primary.main', fontSize: 24, pointerEvents: 'none' }} />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  onImageUpload(id, file);
-                }
-              }}
-              style={{
-                position: 'absolute',
-                opacity: 0,
-                width: '100%',
-                height: '100%',
-                cursor: 'pointer',
-              }}
-            />
-          </Box>
+            <BrushIcon sx={{ color: 'primary.main', fontSize: 24 }} />
+          </IconButton>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            tabIndex={-1}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                onImageUpload(id, file);
+              }
+            }}
+            style={{
+              display: 'none',
+            }}
+          />
         </ListItemIcon>
 
         <ListItemText
