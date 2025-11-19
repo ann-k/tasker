@@ -17,10 +17,12 @@ import {
 } from '@mui/material';
 import { Stack } from '@mui/system';
 
+import { formatDuration } from './duration';
+
 export type Task = {
   id: string;
   name: string;
-  duration: string;
+  duration: number; // длительность в секундах
   status: 'to-do' | 'doing' | 'done';
   image?: string;
   subtasks?: Task[];
@@ -45,7 +47,7 @@ const TaskItem = ({
 }: {
   id: string;
   name: string;
-  duration: string;
+  duration: number;
   image?: string;
   subtasks?: Task[];
   editingTaskId?: string | null;
@@ -244,7 +246,7 @@ const TaskItem = ({
           }
           secondary={
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              {duration}
+              {formatDuration(duration)}
             </Typography>
           }
         />

@@ -1,10 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import PauseIcon from '@mui/icons-material/Pause';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { Box, Dialog, IconButton, Typography } from '@mui/material';
 
 import { type Task } from '../Settings/TaskItem';
+import { formatDurationWithSeconds } from '../Settings/duration';
 
 const TaskPlayScreen = ({
   task,
@@ -18,6 +21,9 @@ const TaskPlayScreen = ({
   onComplete: (taskId: string) => void;
 }) => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [passedSeconds, setPassedSeconds] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (open && closeButtonRef.current) {
@@ -25,7 +31,45 @@ const TaskPlayScreen = ({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (open && task) {
+      setPassedSeconds(0);
+      setIsPaused(false);
+    }
+  }, [open, task]);
+
+  useEffect(() => {
+    if (open && task && !isPaused && passedSeconds < task.duration) {
+      intervalRef.current = setInterval(() => {
+        setPassedSeconds((prev) => {
+          const next = prev + 1;
+          if (next >= task.duration) {
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+            }
+            return task.duration;
+          }
+          return next;
+        });
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [open, task, isPaused, passedSeconds]);
+
   if (!task) return null;
+
+  const remainingSeconds = Math.max(0, task.duration - passedSeconds);
 
   return (
     <Dialog fullScreen open={open} onClose={onClose} aria-labelledby="task-play-title">
@@ -97,36 +141,71 @@ const TaskPlayScreen = ({
             {task.name}
           </Typography>
 
-          <Typography
-            variant="h6"
-            sx={{
-              color: 'text.secondary',
-              textAlign: 'center',
-            }}
-          >
-            {task.duration}
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+            <Typography
+              variant="h6"
+              component="p"
+              sx={{
+                color: 'text.secondary',
+                textAlign: 'center',
+              }}
+            >
+              Прошло: {formatDurationWithSeconds(passedSeconds)}
+            </Typography>
 
-          <IconButton
-            onClick={() => {
-              onComplete(task.id);
-              onClose();
-            }}
-            aria-label="Завершить задачу"
-            sx={{
-              width: 120,
-              height: 120,
-              borderRadius: '50%',
-              bgcolor: 'success.main',
-              color: 'success.contrastText',
-              mt: 4,
-              '&:hover': {
-                bgcolor: 'success.dark',
-              },
-            }}
-          >
-            <CheckIcon sx={{ fontSize: 60 }} />
-          </IconButton>
+            <Typography
+              variant="h6"
+              component="p"
+              sx={{
+                color: 'text.secondary',
+                textAlign: 'center',
+              }}
+            >
+              Осталось: {formatDurationWithSeconds(remainingSeconds)}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', mt: 2 }}>
+            <IconButton
+              onClick={() => setIsPaused(!isPaused)}
+              aria-label={isPaused ? 'Возобновить таймер' : 'Поставить таймер на паузу'}
+              sx={{
+                width: 64,
+                height: 64,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                },
+              }}
+            >
+              {isPaused ? (
+                <PlayArrowIcon sx={{ fontSize: 32 }} />
+              ) : (
+                <PauseIcon sx={{ fontSize: 32 }} />
+              )}
+            </IconButton>
+
+            <IconButton
+              onClick={() => {
+                onComplete(task.id);
+                onClose();
+              }}
+              aria-label="Завершить задачу"
+              sx={{
+                width: 120,
+                height: 120,
+                borderRadius: '50%',
+                bgcolor: 'success.main',
+                color: 'success.contrastText',
+                '&:hover': {
+                  bgcolor: 'success.dark',
+                },
+              }}
+            >
+              <CheckIcon sx={{ fontSize: 60 }} />
+            </IconButton>
+          </Box>
         </Box>
       </Box>
     </Dialog>

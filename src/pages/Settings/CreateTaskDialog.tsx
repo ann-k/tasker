@@ -11,6 +11,8 @@ import {
   RadioGroup,
 } from '@mui/material';
 
+import { DURATION_OPTIONS } from './duration';
+
 const CreateTaskDialog = ({
   open,
   onClose,
@@ -37,25 +39,12 @@ const CreateTaskDialog = ({
             Выберите длительность задачи:
           </FormLabel>
           <RadioGroup value={selectedDuration} onChange={(e) => onDurationSelect(e.target.value)}>
-            {[
-              '1 минута',
-              '3 минуты',
-              '5 минут',
-              '10 минут',
-              '15 минут',
-              '20 минут',
-              '25 минут',
-              '30 минут',
-              '1 час',
-              '2 часа',
-              '3 часа',
-              '4 часа',
-            ].map((duration) => (
+            {DURATION_OPTIONS.map((option) => (
               <FormControlLabel
-                key={duration}
-                value={duration}
+                key={option.label}
+                value={option.label}
                 control={<Radio />}
-                label={duration}
+                label={option.label}
               />
             ))}
           </RadioGroup>

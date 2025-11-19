@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 
 import { type Task } from '../Settings/TaskItem';
+import { formatDuration } from '../Settings/duration';
 
 const ProcessTaskItem = ({
   id,
@@ -28,7 +29,7 @@ const ProcessTaskItem = ({
 }: {
   id: string;
   name: string;
-  duration: string;
+  duration: number;
   image?: string;
   status: 'to-do' | 'doing' | 'done';
   subtasks?: Task[];
@@ -160,7 +161,7 @@ const ProcessTaskItem = ({
                 textDecoration: isCompleted ? 'line-through' : 'none',
               }}
             >
-              {duration}
+              {formatDuration(duration)}
             </Typography>
           }
         />

@@ -24,6 +24,7 @@ import {
 
 import CreateTaskDialog from './CreateTaskDialog';
 import TaskItem, { type Task } from './TaskItem';
+import { formatDuration, parseDuration } from './duration';
 
 const STORAGE_KEY = 'tasker-tasks';
 const DEBOUNCE_DELAY = 500;
@@ -128,12 +129,13 @@ function Settings() {
   };
 
   const handleCreateDialogConfirm = () => {
+    const durationSeconds = parseDuration(selectedDuration);
     if (durationDialogMode === 'edit' && editingDurationTaskId) {
       // Обновляем длительность существующей задачи
       setTasks((prevTasks) =>
         updateTaskInTree(prevTasks, editingDurationTaskId, (task) => ({
           ...task,
-          duration: selectedDuration,
+          duration: durationSeconds,
         })),
       );
     } else {
@@ -144,7 +146,7 @@ function Settings() {
       const newTask: Task = {
         id: newId,
         name: '',
-        duration: selectedDuration,
+        duration: durationSeconds,
         status: 'to-do',
         subtasks: [],
       };
@@ -158,7 +160,7 @@ function Settings() {
   const handleSetDuration = (taskId: string) => {
     const task = findTaskInTree(tasks, taskId);
     if (task) {
-      setSelectedDuration(task.duration);
+      setSelectedDuration(formatDuration(task.duration));
       setDurationDialogMode('edit');
       setEditingDurationTaskId(taskId);
       setIsCreateDialogOpen(true);
@@ -316,7 +318,7 @@ function Settings() {
     const newSubtask: Task = {
       id: newSubtaskId,
       name: '',
-      duration: '1 минута',
+      duration: 60, // 1 минута в секундах
       status: 'to-do',
       subtasks: [],
     };
