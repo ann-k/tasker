@@ -60,7 +60,6 @@ const TaskItem = ({
   level?: number;
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isEditing = editingTaskId === id;
   const isExpanded = expandedTasks.has(id);
