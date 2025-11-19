@@ -4,6 +4,7 @@ import { Box, List, Typography } from '@mui/material';
 
 import { type Task } from '../Settings/TaskItem';
 import ProcessTaskItem from './ProcessTaskItem';
+import TaskPlayScreen from './TaskPlayScreen';
 
 const STORAGE_KEY = 'tasker-tasks';
 
@@ -14,6 +15,7 @@ function Process() {
   });
 
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const handleToggleExpand = (taskId: string) => {
     setExpandedTasks((prev) => {
@@ -25,6 +27,14 @@ function Process() {
       }
       return newSet;
     });
+  };
+
+  const handleTaskSelect = (task: Task) => {
+    setSelectedTask(task);
+  };
+
+  const handleCloseTaskScreen = () => {
+    setSelectedTask(null);
   };
 
   return (
@@ -67,11 +77,18 @@ function Process() {
                 subtasks={task.subtasks}
                 expandedTasks={expandedTasks}
                 onToggleExpand={handleToggleExpand}
+                onPlay={handleTaskSelect}
               />
             ))
           )}
         </List>
       </Box>
+
+      <TaskPlayScreen
+        task={selectedTask}
+        open={Boolean(selectedTask)}
+        onClose={handleCloseTaskScreen}
+      />
     </>
   );
 }

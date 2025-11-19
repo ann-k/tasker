@@ -1,4 +1,5 @@
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
   Box,
   Collapse,
@@ -20,6 +21,7 @@ const ProcessTaskItem = ({
   subtasks,
   expandedTasks,
   onToggleExpand,
+  onPlay,
   level = 0,
 }: {
   id: string;
@@ -29,6 +31,7 @@ const ProcessTaskItem = ({
   subtasks?: Task[];
   expandedTasks: Set<string>;
   onToggleExpand: (taskId: string) => void;
+  onPlay: (task: Task) => void;
   level?: number;
 }) => {
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
@@ -36,6 +39,17 @@ const ProcessTaskItem = ({
 
   const handleChevronClick = () => {
     onToggleExpand(id);
+  };
+
+  const handlePlayClick = () => {
+    onPlay({
+      id,
+      name,
+      duration,
+      status: 'to-do',
+      image,
+      subtasks,
+    });
   };
 
   return (
@@ -51,6 +65,17 @@ const ProcessTaskItem = ({
             borderBottom: 'none',
           },
         }}
+        secondaryAction={
+          <IconButton
+            edge="end"
+            size="small"
+            onClick={handlePlayClick}
+            aria-label={`Запустить задачу: ${name || 'Новая задача'}`}
+            sx={{ color: 'primary.main' }}
+          >
+            <PlayArrowIcon fontSize="small" />
+          </IconButton>
+        }
       >
         {hasSubtasks && (
           <ListItemIcon sx={{ minWidth: 32, mr: 1 }}>
@@ -131,6 +156,7 @@ const ProcessTaskItem = ({
                 subtasks={subtask.subtasks}
                 expandedTasks={expandedTasks}
                 onToggleExpand={onToggleExpand}
+                onPlay={onPlay}
                 level={level + 1}
               />
             ))}
