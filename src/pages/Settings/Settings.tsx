@@ -238,6 +238,20 @@ function Settings() {
       });
   };
 
+  const handleImageUpload = (taskId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setTasks((prevTasks) =>
+        updateTaskInTree(prevTasks, taskId, (task) => ({
+          ...task,
+          image: base64String,
+        })),
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleMenuItemClick = (action: string, taskId: string) => {
     if (action === 'delete') {
       if (debounceTimer.current) {
@@ -246,6 +260,17 @@ function Settings() {
       }
       setTasks((prevTasks) => findTaskAndDelete(prevTasks, taskId));
       if (editingTask?.id === selectedTaskId) setEditingTask(null);
+    } else if (action === 'upload-image') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          handleImageUpload(taskId, file);
+        }
+      };
+      input.click();
     }
 
     handleMenuClose();
@@ -349,6 +374,7 @@ function Settings() {
                   id={task.id}
                   name={isEditingTask ? editingTask.name : task.name}
                   duration={task.duration}
+                  image={task.image}
                   subtasks={task.subtasks}
                   editingTaskId={editingTask?.id ?? null}
                   expandedTasks={expandedTasks}
@@ -358,6 +384,7 @@ function Settings() {
                   onNameBlur={handleNameBlur}
                   onMenuOpen={handleMenuOpen}
                   onAddSubtask={handleAddSubtask}
+                  onImageUpload={handleImageUpload}
                 />
                 <Menu
                   anchorEl={anchorEl}

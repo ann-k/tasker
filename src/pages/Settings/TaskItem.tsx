@@ -22,6 +22,7 @@ export type Task = {
   name: string;
   duration: string;
   status: 'to-do' | 'doing' | 'done';
+  image?: string;
   subtasks?: Task[];
 };
 
@@ -29,6 +30,7 @@ const TaskItem = ({
   id,
   name,
   duration,
+  image,
   subtasks,
   editingTaskId,
   expandedTasks,
@@ -38,11 +40,13 @@ const TaskItem = ({
   onNameBlur,
   onMenuOpen,
   onAddSubtask,
+  onImageUpload,
   level = 0,
 }: {
   id: string;
   name: string;
   duration: string;
+  image?: string;
   subtasks?: Task[];
   editingTaskId?: string | null;
   expandedTasks: Set<string>;
@@ -52,6 +56,7 @@ const TaskItem = ({
   onNameBlur: (taskId: string) => void;
   onMenuOpen: (event: React.MouseEvent<HTMLElement>, taskId: string) => void;
   onAddSubtask: (taskId: string) => void;
+  onImageUpload: (taskId: string, file: File) => void;
   level?: number;
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -134,22 +139,76 @@ const TaskItem = ({
         )}
         <ListItemIcon
           sx={{
-            minWidth: hasSubtasks ? 48 : 40,
+            minWidth: hasSubtasks ? 48 : image ? 88 : 40,
             mr: 1.5,
+            display: 'flex',
+            gap: 1,
+            alignItems: 'center',
           }}
         >
+          {image && (
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+                overflow: 'hidden',
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src={image}
+                alt=""
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+                aria-hidden="true"
+              />
+            </Box>
+          )}
           <Box
+            component="label"
             sx={{
+              position: 'relative',
               width: 40,
               height: 40,
               borderRadius: 1,
               bgcolor: 'primary.light',
+              flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+              '&:hover': {
+                bgcolor: 'primary.main',
+                '& .MuiSvgIcon-root': {
+                  color: 'primary.contrastText',
+                },
+              },
             }}
+            aria-label={image ? 'Изменить изображение' : 'Загрузить изображение'}
           >
-            <BrushIcon sx={{ color: 'primary.main', fontSize: 24 }} />
+            <BrushIcon sx={{ color: 'primary.main', fontSize: 24, pointerEvents: 'none' }} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  onImageUpload(id, file);
+                }
+              }}
+              style={{
+                position: 'absolute',
+                opacity: 0,
+                width: '100%',
+                height: '100%',
+                cursor: 'pointer',
+              }}
+            />
           </Box>
         </ListItemIcon>
 
@@ -199,6 +258,7 @@ const TaskItem = ({
                 id={subtask.id}
                 name={subtask.name}
                 duration={subtask.duration}
+                image={subtask.image}
                 subtasks={subtask.subtasks}
                 editingTaskId={editingTaskId}
                 expandedTasks={expandedTasks}
@@ -208,6 +268,7 @@ const TaskItem = ({
                 onNameBlur={onNameBlur}
                 onMenuOpen={onMenuOpen}
                 onAddSubtask={onAddSubtask}
+                onImageUpload={onImageUpload}
                 level={level + 1}
               />
             ))}
