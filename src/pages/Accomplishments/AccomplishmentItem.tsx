@@ -13,6 +13,7 @@ const AccomplishmentItem = ({
 }) => {
   return (
     <Card
+      role="group"
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -24,7 +25,7 @@ const AccomplishmentItem = ({
       <CardMedia
         component="img"
         image={accomplishment.image}
-        alt={accomplishment.title}
+        alt=""
         sx={{
           height: 200,
           objectFit: 'cover',

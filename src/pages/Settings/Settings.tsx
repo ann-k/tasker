@@ -366,109 +366,115 @@ function Settings() {
           Настройка расписания
         </Typography>
 
-        <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
-          {tasks.map((task) => {
-            const isEditingTask = Boolean(editingTask) && task.id === editingTask?.id;
+        {tasks.length === 0 ? (
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
+            Нет задач
+          </Typography>
+        ) : (
+          <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
+            {tasks.map((task) => {
+              const isEditingTask = Boolean(editingTask) && task.id === editingTask?.id;
 
-            return (
-              <>
-                <TaskItem
-                  key={task.id}
-                  id={task.id}
-                  name={isEditingTask ? editingTask.name : task.name}
-                  duration={task.duration}
-                  image={task.image}
-                  subtasks={task.subtasks}
-                  editingTaskId={editingTask?.id ?? null}
-                  expandedTasks={expandedTasks}
-                  onToggleExpand={handleToggleExpand}
-                  onNameChange={handleNameChange}
-                  onNameFocus={handleNameFocus}
-                  onNameBlur={handleNameBlur}
-                  onMenuOpen={handleMenuOpen}
-                  onAddSubtask={handleAddSubtask}
-                  onImageUpload={handleImageUpload}
-                />
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl)}
-                  onClose={handleMenuClose}
-                  anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'right',
-                  }}
-                >
-                  <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
-                    <ListItemIcon>
-                      <ImageIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Загрузить картинку</ListItemText>
-                  </MenuItem>
+              return (
+                <>
+                  <TaskItem
+                    key={task.id}
+                    id={task.id}
+                    name={isEditingTask ? editingTask.name : task.name}
+                    duration={task.duration}
+                    image={task.image}
+                    subtasks={task.subtasks}
+                    editingTaskId={editingTask?.id ?? null}
+                    expandedTasks={expandedTasks}
+                    onToggleExpand={handleToggleExpand}
+                    onNameChange={handleNameChange}
+                    onNameFocus={handleNameFocus}
+                    onNameBlur={handleNameBlur}
+                    onMenuOpen={handleMenuOpen}
+                    onAddSubtask={handleAddSubtask}
+                    onImageUpload={handleImageUpload}
+                  />
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'right',
+                    }}
+                  >
+                    <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
+                      <ListItemIcon>
+                        <ImageIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>Загрузить картинку</ListItemText>
+                    </MenuItem>
 
-                  <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
-                    <ListItemIcon>
-                      <AutoAwesomeIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>ИИ картинка</ListItemText>
-                  </MenuItem>
+                    <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
+                      <ListItemIcon>
+                        <AutoAwesomeIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>ИИ картинка</ListItemText>
+                    </MenuItem>
 
-                  <Divider />
+                    <Divider />
 
-                  <MenuItem onClick={() => selectedTaskId && handleAddSubtask(selectedTaskId)}>
-                    <ListItemIcon>
-                      <AddIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Добавить подзадачу</ListItemText>
-                  </MenuItem>
+                    <MenuItem onClick={() => selectedTaskId && handleAddSubtask(selectedTaskId)}>
+                      <ListItemIcon>
+                        <AddIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>Добавить подзадачу</ListItemText>
+                    </MenuItem>
 
-                  <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
-                    <ListItemIcon>
-                      <ViewListIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>ИИ декомпозиция</ListItemText>
-                  </MenuItem>
+                    <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
+                      <ListItemIcon>
+                        <ViewListIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>ИИ декомпозиция</ListItemText>
+                    </MenuItem>
 
-                  <Divider />
+                    <Divider />
 
-                  <MenuItem onClick={() => selectedTaskId && handleSetDuration(selectedTaskId)}>
-                    <ListItemIcon>
-                      <AccessTimeIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Задать длительность</ListItemText>
-                  </MenuItem>
+                    <MenuItem onClick={() => selectedTaskId && handleSetDuration(selectedTaskId)}>
+                      <ListItemIcon>
+                        <AccessTimeIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>Задать длительность</ListItemText>
+                    </MenuItem>
 
-                  <Divider />
+                    <Divider />
 
-                  <MenuItem onClick={() => handleMenuItemClick('navigate')}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        gap: 2,
-                        alignItems: 'center',
-                        width: '100%',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <ArrowDownwardIcon fontSize="small" />
-                      <ArrowUpwardIcon fontSize="small" />
-                      <ChevronLeftIcon fontSize="small" />
-                      <ChevronRightIcon fontSize="small" />
-                    </Box>
-                  </MenuItem>
+                    <MenuItem onClick={() => handleMenuItemClick('navigate')}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          gap: 2,
+                          alignItems: 'center',
+                          width: '100%',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <ArrowDownwardIcon fontSize="small" />
+                        <ArrowUpwardIcon fontSize="small" />
+                        <ChevronLeftIcon fontSize="small" />
+                        <ChevronRightIcon fontSize="small" />
+                      </Box>
+                    </MenuItem>
 
-                  <Divider />
+                    <Divider />
 
-                  <MenuItem onClick={() => handleMenuItemClick('delete')}>
-                    <ListItemIcon>
-                      <DeleteIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Удалить задачу</ListItemText>
-                  </MenuItem>
-                </Menu>
-              </>
-            );
-          })}
-        </List>
+                    <MenuItem onClick={() => handleMenuItemClick('delete')}>
+                      <ListItemIcon>
+                        <DeleteIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText>Удалить задачу</ListItemText>
+                    </MenuItem>
+                  </Menu>
+                </>
+              );
+            })}
+          </List>
+        )}
 
         <Button
           variant="contained"

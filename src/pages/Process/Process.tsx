@@ -101,13 +101,13 @@ function Process() {
           Процесс
         </Typography>
 
-        <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
-          {tasks.length === 0 ? (
-            <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-              Нет задач
-            </Typography>
-          ) : (
-            tasks.map((task) => (
+        {tasks.length === 0 ? (
+          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
+            Нет задач
+          </Typography>
+        ) : (
+          <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
+            {tasks.map((task) => (
               <ProcessTaskItem
                 key={task.id}
                 id={task.id}
@@ -120,9 +120,9 @@ function Process() {
                 onToggleExpand={handleToggleExpand}
                 onPlay={handleTaskSelect}
               />
-            ))
-          )}
-        </List>
+            ))}
+          </List>
+        )}
       </Box>
 
       <TaskPlayScreen

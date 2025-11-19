@@ -114,6 +114,7 @@ const TaskItem = ({
               size="small"
               sx={{ color: 'text.secondary' }}
               onClick={(e) => onMenuOpen(e, id)}
+              aria-label="Ещё"
             >
               <MoreVertIcon fontSize="small" />
             </IconButton>

@@ -4,32 +4,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid2,
-  Typography,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
 } from '@mui/material';
-
-const DurationButton = ({
-  duration,
-  selectedDuration,
-  onSelect,
-}: {
-  duration: string;
-  selectedDuration: string;
-  onSelect: (duration: string) => void;
-}) => {
-  return (
-    <Grid2 size={6}>
-      <Button
-        fullWidth
-        variant={selectedDuration === duration ? 'contained' : 'outlined'}
-        onClick={() => onSelect(duration)}
-        sx={{ textTransform: 'none' }}
-      >
-        {duration}
-      </Button>
-    </Grid2>
-  );
-};
 
 const CreateTaskDialog = ({
   open,
@@ -52,31 +32,34 @@ const CreateTaskDialog = ({
         {mode === 'create' ? 'Создать новую задачу' : 'Задать длительность'}
       </DialogTitle>
       <DialogContent>
-        <Typography sx={{ mb: 2 }}>Выберите длительность задачи:</Typography>
-
-        <Grid2 container spacing={1}>
-          {[
-            '1 минута',
-            '3 минуты',
-            '5 минут',
-            '10 минут',
-            '15 минут',
-            '20 минут',
-            '25 минут',
-            '30 минут',
-            '1 час',
-            '2 часа',
-            '3 часа',
-            '4 часа',
-          ].map((duration) => (
-            <DurationButton
-              key={duration}
-              duration={duration}
-              selectedDuration={selectedDuration}
-              onSelect={onDurationSelect}
-            />
-          ))}
-        </Grid2>
+        <FormControl component="fieldset" fullWidth>
+          <FormLabel component="legend" sx={{ mb: 2 }}>
+            Выберите длительность задачи:
+          </FormLabel>
+          <RadioGroup value={selectedDuration} onChange={(e) => onDurationSelect(e.target.value)}>
+            {[
+              '1 минута',
+              '3 минуты',
+              '5 минут',
+              '10 минут',
+              '15 минут',
+              '20 минут',
+              '25 минут',
+              '30 минут',
+              '1 час',
+              '2 часа',
+              '3 часа',
+              '4 часа',
+            ].map((duration) => (
+              <FormControlLabel
+                key={duration}
+                value={duration}
+                control={<Radio />}
+                label={duration}
+              />
+            ))}
+          </RadioGroup>
+        </FormControl>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>

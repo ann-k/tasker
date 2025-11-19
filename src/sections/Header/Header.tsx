@@ -19,7 +19,7 @@ function Header() {
       data-pw={`theme-${themeMode}`}
       enableColorOnDark
     >
-      <BottomNavigation showLabels value={location.pathname}>
+      <BottomNavigation showLabels value={location.pathname} component="nav">
         {menuLabels.map(({ path, title, icon: Icon }) => (
           <BottomNavigationAction
             onClick={() => navigate(path ?? '')}
