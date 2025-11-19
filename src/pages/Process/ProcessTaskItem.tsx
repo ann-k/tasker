@@ -1,3 +1,4 @@
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
@@ -18,6 +19,7 @@ const ProcessTaskItem = ({
   name,
   duration,
   image,
+  status,
   subtasks,
   expandedTasks,
   onToggleExpand,
@@ -28,6 +30,7 @@ const ProcessTaskItem = ({
   name: string;
   duration: string;
   image?: string;
+  status: 'to-do' | 'doing' | 'done';
   subtasks?: Task[];
   expandedTasks: Set<string>;
   onToggleExpand: (taskId: string) => void;
@@ -36,6 +39,7 @@ const ProcessTaskItem = ({
 }) => {
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isExpanded = expandedTasks.has(id);
+  const isCompleted = status === 'done';
 
   const handleChevronClick = () => {
     onToggleExpand(id);
@@ -46,7 +50,7 @@ const ProcessTaskItem = ({
       id,
       name,
       duration,
-      status: 'to-do',
+      status,
       image,
       subtasks,
     });
@@ -61,20 +65,25 @@ const ProcessTaskItem = ({
           pl: level > 0 ? level * 2 + 1 + (hasSubtasks ? 0 : 5) : 1,
           borderBottom: '1px solid',
           borderColor: 'divider',
+          opacity: isCompleted ? 0.6 : 1,
           '&:last-child': {
             borderBottom: 'none',
           },
         }}
         secondaryAction={
-          <IconButton
-            edge="end"
-            size="small"
-            onClick={handlePlayClick}
-            aria-label={`Запустить задачу: ${name || 'Новая задача'}`}
-            sx={{ color: 'primary.main' }}
-          >
-            <PlayArrowIcon fontSize="small" />
-          </IconButton>
+          isCompleted ? (
+            <CheckCircleIcon sx={{ color: 'success.main', fontSize: 24 }} />
+          ) : (
+            <IconButton
+              edge="end"
+              size="small"
+              onClick={handlePlayClick}
+              aria-label={`Запустить задачу: ${name}`}
+              sx={{ color: 'primary.main' }}
+            >
+              <PlayArrowIcon fontSize="small" />
+            </IconButton>
+          )
         }
       >
         {hasSubtasks && (
@@ -131,12 +140,26 @@ const ProcessTaskItem = ({
 
         <ListItemText
           primary={
-            <Typography variant="body1" sx={{ fontWeight: 400, color: 'text.primary' }}>
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: 400,
+                color: 'text.primary',
+                textDecoration: isCompleted ? 'line-through' : 'none',
+              }}
+            >
               {name || 'Новая задача'}
             </Typography>
           }
           secondary={
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'text.secondary',
+                mt: 0.5,
+                textDecoration: isCompleted ? 'line-through' : 'none',
+              }}
+            >
               {duration}
             </Typography>
           }
@@ -153,6 +176,7 @@ const ProcessTaskItem = ({
                 name={subtask.name}
                 duration={subtask.duration}
                 image={subtask.image}
+                status={subtask.status}
                 subtasks={subtask.subtasks}
                 expandedTasks={expandedTasks}
                 onToggleExpand={onToggleExpand}

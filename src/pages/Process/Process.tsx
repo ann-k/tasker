@@ -9,7 +9,7 @@ import TaskPlayScreen from './TaskPlayScreen';
 const STORAGE_KEY = 'tasker-tasks';
 
 function Process() {
-  const [tasks] = useState<Task[]>(() => {
+  const [tasks, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY);
     return savedTasks ? JSON.parse(savedTasks) : [];
   });
@@ -35,6 +35,45 @@ function Process() {
 
   const handleCloseTaskScreen = () => {
     setSelectedTask(null);
+  };
+
+  const updateTaskInTree = (
+    tasksList: Task[],
+    taskId: string,
+    updater: (task: Task) => Task,
+  ): Task[] => {
+    return tasksList.map((task) => {
+      if (task.id === taskId) {
+        return updater(task);
+      }
+      if (task.subtasks && task.subtasks.length > 0) {
+        return {
+          ...task,
+          subtasks: updateTaskInTree(task.subtasks, taskId, updater),
+        };
+      }
+      return task;
+    });
+  };
+
+  const markTaskAndSubtasksAsDone = (task: Task): Task => {
+    return {
+      ...task,
+      status: 'done' as const,
+      subtasks: task.subtasks
+        ? task.subtasks.map((subtask) => markTaskAndSubtasksAsDone(subtask))
+        : undefined,
+    };
+  };
+
+  const handleTaskComplete = (taskId: string) => {
+    setTasks((prevTasks) => {
+      const updated = updateTaskInTree(prevTasks, taskId, (task) =>
+        markTaskAndSubtasksAsDone(task),
+      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
@@ -74,6 +113,7 @@ function Process() {
                 name={task.name}
                 duration={task.duration}
                 image={task.image}
+                status={task.status}
                 subtasks={task.subtasks}
                 expandedTasks={expandedTasks}
                 onToggleExpand={handleToggleExpand}
@@ -88,6 +128,7 @@ function Process() {
         task={selectedTask}
         open={Boolean(selectedTask)}
         onClose={handleCloseTaskScreen}
+        onComplete={handleTaskComplete}
       />
     </>
   );

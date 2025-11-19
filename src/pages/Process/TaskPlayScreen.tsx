@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 
+import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Dialog, IconButton, Typography } from '@mui/material';
 
@@ -9,10 +10,12 @@ const TaskPlayScreen = ({
   task,
   open,
   onClose,
+  onComplete,
 }: {
   task: Task | null;
   open: boolean;
   onClose: () => void;
+  onComplete: (taskId: string) => void;
 }) => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -24,44 +27,24 @@ const TaskPlayScreen = ({
 
   if (!task) return null;
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      onClose();
-    }
-  };
-
   return (
-    <Dialog
-      fullScreen
-      open={open}
-      onClose={onClose}
-      onKeyDown={handleKeyDown}
-      aria-labelledby="task-play-title"
-      aria-modal="true"
-      role="dialog"
-    >
+    <Dialog fullScreen open={open} onClose={onClose} aria-labelledby="task-play-title">
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
-          width: '100%',
           position: 'relative',
         }}
       >
         <IconButton
           ref={closeButtonRef}
           onClick={onClose}
-          aria-label="Закрыть экран задачи"
+          aria-label="Закрыть"
           sx={{
             position: 'absolute',
             top: 16,
             right: 16,
-            zIndex: 1,
-            '&:focus-visible': {
-              outline: '3px solid #1976d2 !important',
-              outlineOffset: '2px !important',
-            },
           }}
         >
           <CloseIcon />
@@ -91,7 +74,7 @@ const TaskPlayScreen = ({
             >
               <img
                 src={task.image}
-                alt={task.name || 'Изображение задачи'}
+                alt={task.name || ''}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -111,7 +94,7 @@ const TaskPlayScreen = ({
               color: 'text.primary',
             }}
           >
-            {task.name || 'Новая задача'}
+            {task.name}
           </Typography>
 
           <Typography
@@ -123,6 +106,27 @@ const TaskPlayScreen = ({
           >
             {task.duration}
           </Typography>
+
+          <IconButton
+            onClick={() => {
+              onComplete(task.id);
+              onClose();
+            }}
+            aria-label="Завершить задачу"
+            sx={{
+              width: 120,
+              height: 120,
+              borderRadius: '50%',
+              bgcolor: 'success.main',
+              color: 'success.contrastText',
+              mt: 4,
+              '&:hover': {
+                bgcolor: 'success.dark',
+              },
+            }}
+          >
+            <CheckIcon sx={{ fontSize: 60 }} />
+          </IconButton>
         </Box>
       </Box>
     </Dialog>
