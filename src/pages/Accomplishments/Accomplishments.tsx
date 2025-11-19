@@ -26,10 +26,23 @@ function Accomplishments() {
           overflow: 'auto',
         }}
       >
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            fontWeight: 500,
+            mb: 4,
+            color: 'text.primary',
+          }}
+        >
+          Достижения
+        </Typography>
+
         {completedAccomplishments.length > 0 && (
           <Box sx={{ mb: 4 }}>
             <Typography
               variant="h5"
+              component="h2"
               sx={{
                 fontWeight: 500,
                 mb: 2,
@@ -53,6 +66,7 @@ function Accomplishments() {
           <Box>
             <Typography
               variant="h5"
+              component="h2"
               sx={{
                 fontWeight: 500,
                 mb: 2,

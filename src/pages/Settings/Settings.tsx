@@ -354,7 +354,8 @@ function Settings() {
         }}
       >
         <Typography
-          variant="h5"
+          variant="h4"
+          component="h1"
           sx={{
             fontWeight: 500,
             mb: 2,
