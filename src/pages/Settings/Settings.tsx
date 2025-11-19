@@ -475,6 +475,10 @@ function Settings() {
             mt: 2,
             py: 1.5,
             textTransform: 'none',
+            bgcolor: '#9c27b0',
+            '&:hover': {
+              bgcolor: '#7b1fa2',
+            },
           }}
         >
           Добавить задачу

@@ -6,9 +6,7 @@ import { ThemeMode } from './types';
 const sharedTheme = {
   components: {
     MuiButtonBase: {
-      defaultProps: {
-        disableRipple: true,
-      },
+      defaultProps: {},
     },
     MuiDivider: {
       styleOverrides: {
