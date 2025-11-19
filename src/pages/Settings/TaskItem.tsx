@@ -89,7 +89,7 @@ const TaskItem = ({
         sx={{
           px: 1,
           py: 1.5,
-          pl: level > 0 ? level * 2 + 1 : 1,
+          pl: level > 0 ? level * 2 + 1 + (hasSubtasks ? 0 : 5) : 1,
           borderBottom: '1px solid',
           borderColor: 'divider',
           '&:last-child': {
