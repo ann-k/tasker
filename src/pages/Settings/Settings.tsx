@@ -11,7 +11,6 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import {
   Box,
   Button,
-  Divider,
   List,
   ListItemIcon,
   ListItemText,
@@ -601,8 +600,6 @@ function Settings() {
                       <ListItemText>ИИ картинка</ListItemText>
                     </MenuItem> */}
 
-                    <Divider />
-
                     <MenuItem onClick={() => selectedTask && handleAddSubtask(selectedTask.id)}>
                       <ListItemIcon>
                         <AddIcon fontSize="small" />
@@ -617,8 +614,6 @@ function Settings() {
                       <ListItemText>ИИ декомпозиция</ListItemText>
                     </MenuItem>
 
-                    <Divider />
-
                     {selectedTask &&
                       (!selectedTask.subtasks || selectedTask.subtasks.length === 0) && (
                         <MenuItem onClick={() => handleSetDuration(selectedTask)}>
@@ -628,7 +623,6 @@ function Settings() {
                           <ListItemText>Поменять длительность</ListItemText>
                         </MenuItem>
                       )}
-                    <Divider />
 
                     {selectedTask &&
                       tasks.findIndex((task) => task.id === selectedTask.id) !== 0 && (
@@ -650,8 +644,6 @@ function Settings() {
                           <ListItemText>Подвинуть вниз</ListItemText>
                         </MenuItem>
                       )}
-
-                    <Divider />
 
                     <MenuItem onClick={() => handleMenuItemClick('delete')}>
                       <ListItemIcon>
