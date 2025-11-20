@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
-import { Box, List, Typography } from '@mui/material';
+import { Box, Link, List, Typography } from '@mui/material';
 
 import { type Task } from '../Settings/TaskItem';
 import ProcessTaskItem from './ProcessTaskItem';
@@ -9,6 +10,7 @@ import TaskPlayScreen from './TaskPlayScreen';
 const STORAGE_KEY = 'tasker-tasks';
 
 function Process() {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY);
     return savedTasks ? JSON.parse(savedTasks) : [];
@@ -102,9 +104,19 @@ function Process() {
         </Typography>
 
         {tasks.length === 0 ? (
-          <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-            Нет задач
-          </Typography>
+          <Box sx={{ textAlign: 'center', mt: 4 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+              Добавьте задачи в расписание
+            </Typography>
+            <Link
+              component="button"
+              variant="body1"
+              onClick={() => navigate('/settings')}
+              sx={{ cursor: 'pointer' }}
+            >
+              Перейти в настройки
+            </Link>
+          </Box>
         ) : (
           <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
             {tasks.map((task) => (

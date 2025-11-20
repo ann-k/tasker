@@ -38,20 +38,20 @@ function Accomplishments() {
           Достижения
         </Typography>
 
-        {completedAccomplishments.length > 0 && (
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              variant="h5"
-              component="h2"
-              sx={{
-                fontWeight: 500,
-                mb: 2,
-                color: 'text.primary',
-              }}
-            >
-              Мои достижения
-            </Typography>
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{
+              fontWeight: 500,
+              mb: 2,
+              color: 'text.primary',
+            }}
+          >
+            Мои достижения
+          </Typography>
 
+          {completedAccomplishments.length > 0 ? (
             <Grid2 container spacing={2}>
               {completedAccomplishments.map((accomplishment) => (
                 <Grid2 size={{ xs: 12, sm: 6, md: 4 }} key={accomplishment.id}>
@@ -59,8 +59,12 @@ function Accomplishments() {
                 </Grid2>
               ))}
             </Grid2>
-          </Box>
-        )}
+          ) : (
+            <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+              Выполняйте задачи и получайте достижения
+            </Typography>
+          )}
+        </Box>
 
         {pendingAccomplishments.length > 0 && (
           <Box>
