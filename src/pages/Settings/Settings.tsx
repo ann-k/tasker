@@ -83,6 +83,20 @@ function Settings() {
     [],
   );
 
+  const findTaskAndDelete = useCallback((tasksList: Task[], taskId: string): Task[] => {
+    return tasksList
+      .filter((task) => task.id !== taskId)
+      .map((task) => {
+        if (task.subtasks && task.subtasks.length > 0) {
+          return {
+            ...task,
+            subtasks: findTaskAndDelete(task.subtasks, taskId),
+          };
+        }
+        return task;
+      });
+  }, []);
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
@@ -222,20 +236,6 @@ function Settings() {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedTaskId(null);
-  };
-
-  const findTaskAndDelete = (tasksList: Task[], taskId: string): Task[] => {
-    return tasksList
-      .filter((task) => task.id !== taskId)
-      .map((task) => {
-        if (task.subtasks && task.subtasks.length > 0) {
-          return {
-            ...task,
-            subtasks: findTaskAndDelete(task.subtasks, taskId),
-          };
-        }
-        return task;
-      });
   };
 
   const handleImageUpload = (taskId: string, file: File) => {

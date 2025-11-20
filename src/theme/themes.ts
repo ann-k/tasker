@@ -24,6 +24,12 @@ const themes: Record<ThemeMode, ThemeOptions> = {
   light: deepmerge(sharedTheme, {
     palette: {
       mode: 'light',
+      primary: {
+        main: '#9c27b0',
+        light: '#ba68c8',
+        dark: '#7b1fa2',
+        contrastText: '#fff',
+      },
       background: {
         default: '#fafafa',
         paper: '#fff',
@@ -34,6 +40,12 @@ const themes: Record<ThemeMode, ThemeOptions> = {
   dark: deepmerge(sharedTheme, {
     palette: {
       mode: 'dark',
+      primary: {
+        main: '#9c27b0',
+        light: '#ba68c8',
+        dark: '#7b1fa2',
+        contrastText: '#fff',
+      },
       background: {
         default: '#111',
         paper: '#171717',
