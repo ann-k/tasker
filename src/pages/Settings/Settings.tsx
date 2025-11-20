@@ -7,7 +7,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 // import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
-// import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import {
   Box,
   Button,
@@ -393,6 +393,98 @@ function Settings() {
     handleMenuClose();
   };
 
+  const findParentTask = (
+    tasksList: Task[],
+    task: Task,
+    parent: Task | null = null,
+  ): Task | null => {
+    for (const t of tasksList) {
+      if (t.id === task.id) {
+        return parent;
+      }
+      if (t.subtasks && t.subtasks.length > 0) {
+        const found = findParentTask(t.subtasks, task, t);
+        if (found !== null) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  const findSiblings = (tasksList: Task[], task: Task): Task[] => {
+    // Ищем задачу на верхнем уровне
+    const topLevelIndex = tasksList.findIndex((t) => t.id === task.id);
+    if (topLevelIndex !== -1) {
+      return tasksList;
+    }
+
+    // Ищем в подзадачах
+    for (const t of tasksList) {
+      if (t.subtasks && t.subtasks.length > 0) {
+        const subtaskIndex = t.subtasks.findIndex((subtask) => subtask.id === task.id);
+        if (subtaskIndex !== -1) {
+          return t.subtasks;
+        }
+        const found = findSiblings(t.subtasks, task);
+        if (found.length > 0) {
+          return found;
+        }
+      }
+    }
+    return [];
+  };
+
+  const handleAIDecomposition = async (taskId: string) => {
+    const task = findTaskInTree(tasks, taskId);
+    if (!task) {
+      console.error('Task not found');
+      handleMenuClose();
+      return;
+    }
+
+    const taskTitle = task.name;
+    const parentTask = findParentTask(tasks, task);
+    const parentTitle = parentTask?.name || null;
+    const siblingsTitles =
+      parentTask === null
+        ? []
+        : findSiblings(tasks, task)
+            .filter((t) => t.id !== task.id)
+            .map((t) => t.name)
+            .filter((name) => name);
+
+    const body = {
+      task_title: taskTitle,
+      parent_context: parentTitle,
+      parent_id: null,
+      level: 0,
+      siblings: siblingsTitles,
+    };
+
+    console.log(body);
+
+    try {
+      const startResponse = await fetch('https://cloud.dab512.ru/tasker/api/decompose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await startResponse.json();
+      console.log(data);
+
+      if (!data.success) {
+        console.error(`Error at stage: ${data.stage}`, data.error);
+        return;
+      }
+    } catch (error) {
+      console.error('Error during AI decomposition:', error);
+    }
+
+    handleMenuClose();
+  };
+
   return (
     <>
       <meta name="title" content="Настройка расписания" />
@@ -481,12 +573,14 @@ function Settings() {
                       <ListItemText>Добавить подзадачу</ListItemText>
                     </MenuItem>
 
-                    {/* <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
+                    <MenuItem
+                      onClick={() => selectedTaskId && handleAIDecomposition(selectedTaskId)}
+                    >
                       <ListItemIcon>
                         <ViewListIcon fontSize="small" />
                       </ListItemIcon>
                       <ListItemText>ИИ декомпозиция</ListItemText>
-                    </MenuItem> */}
+                    </MenuItem>
 
                     <Divider />
 
