@@ -1,5 +1,4 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { Box, Card, CardContent, CardMedia, Typography } from '@mui/material';
 
 import { type Accomplishment } from './types';
@@ -18,7 +17,7 @@ const AccomplishmentItem = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        opacity: completed ? 0.7 : 1,
+        opacity: completed ? 1 : 0.7,
         transition: 'opacity 0.2s',
       }}
     >
@@ -51,11 +50,7 @@ const AccomplishmentItem = ({
               justifyContent: 'center',
             }}
           >
-            {completed ? (
-              <CheckCircleIcon sx={{ color: 'success.main', fontSize: 28 }} />
-            ) : (
-              <RadioButtonUncheckedIcon sx={{ color: 'text.secondary', fontSize: 28 }} />
-            )}
+            {completed && <CheckCircleIcon sx={{ color: 'success.main', fontSize: 28 }} />}
           </Box>
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>

@@ -4,12 +4,12 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+// import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
-import ViewListIcon from '@mui/icons-material/ViewList';
+// import ViewListIcon from '@mui/icons-material/ViewList';
 import {
   Box,
   Button,
@@ -412,12 +412,12 @@ function Settings() {
                       <ListItemText>Загрузить картинку</ListItemText>
                     </MenuItem>
 
-                    <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
+                    {/* <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
                       <ListItemIcon>
                         <AutoAwesomeIcon fontSize="small" />
                       </ListItemIcon>
                       <ListItemText>ИИ картинка</ListItemText>
-                    </MenuItem>
+                    </MenuItem> */}
 
                     <Divider />
 
@@ -428,12 +428,12 @@ function Settings() {
                       <ListItemText>Добавить подзадачу</ListItemText>
                     </MenuItem>
 
-                    <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
+                    {/* <MenuItem onClick={() => handleMenuItemClick('ai-decomposition')}>
                       <ListItemIcon>
                         <ViewListIcon fontSize="small" />
                       </ListItemIcon>
                       <ListItemText>ИИ декомпозиция</ListItemText>
-                    </MenuItem>
+                    </MenuItem> */}
 
                     <Divider />
 
