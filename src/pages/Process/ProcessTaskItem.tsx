@@ -59,7 +59,16 @@ const ProcessTaskItem = ({
           },
         }}
         secondaryAction={
-          isCompleted ? <CheckCircleIcon sx={{ color: 'success.main', fontSize: 24 }} /> : null
+          isCompleted ? (
+            <Box
+              component="span"
+              role="img"
+              aria-label="Выполнено"
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
+              <CheckCircleIcon aria-hidden="true" sx={{ color: 'success.main', fontSize: 24 }} />
+            </Box>
+          ) : null
         }
       >
         {hasSubtasks && (
