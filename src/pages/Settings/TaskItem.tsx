@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
-import BrushIcon from '@mui/icons-material/Brush';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
@@ -64,7 +63,6 @@ const TaskItem = ({
   level?: number;
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isEditing = editingTaskId === id;
   const isExpanded = expandedTasks.has(id);
@@ -145,16 +143,15 @@ const TaskItem = ({
             </IconButton>
           </ListItemIcon>
         )}
-        <ListItemIcon
-          sx={{
-            minWidth: hasSubtasks ? 48 : image ? 88 : 40,
-            mr: 1.5,
-            display: 'flex',
-            gap: 1,
-            alignItems: 'center',
-          }}
-        >
-          {image && (
+        {image && (
+          <ListItemIcon
+            sx={{
+              minWidth: 48,
+              mr: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             <Box
               sx={{
                 width: 40,
@@ -175,49 +172,8 @@ const TaskItem = ({
                 aria-hidden="true"
               />
             </Box>
-          )}
-          <IconButton
-            size="small"
-            onClick={() => {
-              fileInputRef.current?.click();
-            }}
-            sx={{
-              width: 40,
-              height: 40,
-              bgcolor: 'primary.light',
-              flexShrink: 0,
-              '&:hover': {
-                bgcolor: 'primary.main',
-                '& .MuiSvgIcon-root': {
-                  color: 'primary.contrastText',
-                },
-              },
-              '&:focus-visible': {
-                outline: '3px solid #1976d2 !important',
-                outlineOffset: '2px !important',
-                boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.3) !important',
-              },
-            }}
-            aria-label={image ? 'Изменить изображение' : 'Загрузить изображение'}
-          >
-            <BrushIcon sx={{ color: 'primary.main', fontSize: 24 }} />
-          </IconButton>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            tabIndex={-1}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                onImageUpload(id, file);
-              }
-            }}
-            style={{
-              display: 'none',
-            }}
-          />
-        </ListItemIcon>
+          </ListItemIcon>
+        )}
 
         <ListItemText
           primary={

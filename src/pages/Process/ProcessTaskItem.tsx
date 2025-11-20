@@ -106,16 +106,15 @@ const ProcessTaskItem = ({
           </ListItemIcon>
         )}
 
-        <ListItemIcon
-          sx={{
-            minWidth: hasSubtasks ? 48 : image ? 88 : 40,
-            mr: 1.5,
-            display: 'flex',
-            gap: 1,
-            alignItems: 'center',
-          }}
-        >
-          {image && (
+        {image && (
+          <ListItemIcon
+            sx={{
+              minWidth: 48,
+              mr: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             <Box
               sx={{
                 width: 40,
@@ -136,8 +135,8 @@ const ProcessTaskItem = ({
                 aria-hidden="true"
               />
             </Box>
-          )}
-        </ListItemIcon>
+          </ListItemIcon>
+        )}
 
         <ListItemText
           primary={
