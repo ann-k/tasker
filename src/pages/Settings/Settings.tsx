@@ -51,6 +51,7 @@ function Settings() {
   const [selectedDuration, setSelectedDuration] = useState<string>('1 минута');
   const [durationDialogMode, setDurationDialogMode] = useState<'create' | 'edit'>('create');
   const [editingDurationTaskId, setEditingDurationTaskId] = useState<string | null>(null);
+  const [parentTaskId, setParentTaskId] = useState<string | null>(null);
 
   const findTaskInTree = (tasksList: Task[], taskId: string): Task | null => {
     for (const task of tasksList) {
@@ -134,6 +135,7 @@ function Settings() {
     setIsCreateDialogOpen(false);
     setSelectedDuration('1 минута');
     setEditingDurationTaskId(null);
+    setParentTaskId(null);
   };
 
   const handleDurationSelect = (duration: string) => {
@@ -150,6 +152,23 @@ function Settings() {
           duration: durationSeconds,
         })),
       );
+    } else if (parentTaskId) {
+      // Создаем новую подзадачу
+      const newSubtaskId = generateTaskId();
+      const newSubtask: Task = {
+        id: newSubtaskId,
+        name: '',
+        duration: durationSeconds,
+        status: 'to-do',
+        subtasks: [],
+      };
+      setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, parentTaskId, newSubtask));
+
+      // Автоматически раскрываем задачу при добавлении подзадачи
+      setExpandedTasks((prev) => new Set(prev).add(parentTaskId));
+
+      // Устанавливаем новую подзадачу в режим редактирования
+      setEditingTask({ id: newSubtaskId, name: '' });
     } else {
       // Создаем новую задачу
       const newId = generateTaskId();
@@ -167,6 +186,7 @@ function Settings() {
     setIsCreateDialogOpen(false);
     setSelectedDuration('1 минута');
     setEditingDurationTaskId(null);
+    setParentTaskId(null);
   };
 
   const handleSetDuration = (taskId: string) => {
@@ -312,21 +332,13 @@ function Settings() {
       );
     }
 
-    const newSubtaskId = generateTaskId();
-    const newSubtask: Task = {
-      id: newSubtaskId,
-      name: '',
-      duration: 60, // 1 минута в секундах
-      status: 'to-do',
-      subtasks: [],
-    };
-    setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, taskId, newSubtask));
-
-    // Автоматически раскрываем задачу при добавлении подзадачи
-    setExpandedTasks((prev) => new Set(prev).add(taskId));
-
-    // Устанавливаем новую подзадачу в режим редактирования
-    setEditingTask({ id: newSubtaskId, name: '' });
+    // Открываем диалог для выбора длительности подзадачи
+    setSelectedDuration('1 минута');
+    setDurationDialogMode('create');
+    setEditingDurationTaskId(null);
+    setParentTaskId(taskId);
+    setIsCreateDialogOpen(true);
+    handleMenuClose();
   };
 
   const handleToggleExpand = (taskId: string) => {
