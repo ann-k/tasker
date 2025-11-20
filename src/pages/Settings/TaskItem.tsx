@@ -183,11 +183,11 @@ const TaskItem = ({
               onChange={(e) => onNameChange(e.target.value)}
               onFocus={() => onNameFocus(id)}
               onBlur={() => onNameBlur(id)}
-              variant="standard"
               placeholder="Введите название задачи"
               fullWidth
               sx={{
                 '& .MuiInputBase-root': {
+                  width: 'calc(100% - 64px - 20px)',
                   fontSize: '1rem',
                   fontWeight: 400,
                   color: 'text.primary',
@@ -196,9 +196,9 @@ const TaskItem = ({
                   },
                 },
                 '& .MuiInputBase-input': {
-                  padding: 0,
+                  padding: '10px',
                   '&::placeholder': {
-                    opacity: 0.5,
+                    // opacity: 0.5,
                   },
                 },
               }}
