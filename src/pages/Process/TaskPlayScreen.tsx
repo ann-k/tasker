@@ -39,18 +39,9 @@ const TaskPlayScreen = ({
   }, [open, task]);
 
   useEffect(() => {
-    if (open && task && !isPaused && passedSeconds < task.duration) {
+    if (open && task && !isPaused) {
       intervalRef.current = setInterval(() => {
-        setPassedSeconds((prev) => {
-          const next = prev + 1;
-          if (next >= task.duration) {
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current);
-            }
-            return task.duration;
-          }
-          return next;
-        });
+        setPassedSeconds((prev) => prev + 1);
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -65,7 +56,7 @@ const TaskPlayScreen = ({
         intervalRef.current = null;
       }
     };
-  }, [open, task, isPaused, passedSeconds]);
+  }, [open, task, isPaused]);
 
   if (!task) return null;
 
