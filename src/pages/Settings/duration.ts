@@ -1,3 +1,5 @@
+import type { Task } from './TaskItem';
+
 export const DURATION_OPTIONS = [
   { label: '1 минута', seconds: 60 },
   { label: '3 минуты', seconds: 180 },
@@ -32,4 +34,17 @@ export const formatDurationWithSeconds = (seconds: number): string => {
 export const parseDuration = (label: string): number => {
   const option = DURATION_OPTIONS.find((opt) => opt.label === label);
   return option?.seconds || 60;
+};
+
+export const calculateSubtasksDuration = (subtasks?: Task[]): number => {
+  if (!subtasks || subtasks.length === 0) {
+    return 0;
+  }
+  return subtasks.reduce((total, task) => {
+    const taskDuration =
+      task.subtasks && task.subtasks.length > 0
+        ? calculateSubtasksDuration(task.subtasks)
+        : task.duration;
+    return total + taskDuration;
+  }, 0);
 };

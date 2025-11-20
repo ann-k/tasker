@@ -197,12 +197,11 @@ function Settings() {
     setParentTaskId(null);
   };
 
-  const handleSetDuration = (taskId: string) => {
-    const task = findTaskInTree(tasks, taskId);
+  const handleSetDuration = (task: Task) => {
     if (task) {
       setSelectedDuration(formatDuration(task.duration));
       setDurationDialogMode('edit');
-      setEditingDurationTaskId(taskId);
+      setEditingDurationTaskId(task.id);
       setIsCreateDialogOpen(true);
     }
     handleMenuClose();
@@ -620,13 +619,15 @@ function Settings() {
 
                     <Divider />
 
-                    <MenuItem onClick={() => selectedTask && handleSetDuration(selectedTask.id)}>
-                      <ListItemIcon>
-                        <AccessTimeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>Поменять длительность</ListItemText>
-                    </MenuItem>
-
+                    {selectedTask &&
+                      (!selectedTask.subtasks || selectedTask.subtasks.length === 0) && (
+                        <MenuItem onClick={() => handleSetDuration(selectedTask)}>
+                          <ListItemIcon>
+                            <AccessTimeIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Поменять длительность</ListItemText>
+                        </MenuItem>
+                      )}
                     <Divider />
 
                     {selectedTask &&

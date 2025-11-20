@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 
 import { type Task } from '../Settings/TaskItem';
-import { formatDuration } from '../Settings/duration';
+import { calculateSubtasksDuration, formatDuration } from '../Settings/duration';
 
 const ProcessTaskItem = ({
   id,
@@ -41,6 +41,7 @@ const ProcessTaskItem = ({
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isExpanded = expandedTasks.has(id);
   const isCompleted = status === 'done';
+  const displayDuration = hasSubtasks ? calculateSubtasksDuration(subtasks) : duration;
 
   const handleChevronClick = () => {
     onToggleExpand(id);
@@ -160,7 +161,7 @@ const ProcessTaskItem = ({
                 textDecoration: isCompleted ? 'line-through' : 'none',
               }}
             >
-              {formatDuration(duration)}
+              {formatDuration(displayDuration)}
             </Typography>
           }
         />

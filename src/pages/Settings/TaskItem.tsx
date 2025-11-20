@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { Stack } from '@mui/system';
 
-import { formatDuration } from './duration';
+import { calculateSubtasksDuration, formatDuration } from './duration';
 
 export type Task = {
   id: string;
@@ -68,6 +68,7 @@ const TaskItem = ({
   const isExpanded = expandedTasks.has(id);
   const editingTaskName = getEditingTaskName(id);
   const displayName = isEditing && editingTaskName !== null ? editingTaskName : name;
+  const displayDuration = hasSubtasks ? calculateSubtasksDuration(subtasks) : duration;
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -206,7 +207,7 @@ const TaskItem = ({
           }
           secondary={
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              {formatDuration(duration)}
+              {formatDuration(displayDuration)}
             </Typography>
           }
         />
