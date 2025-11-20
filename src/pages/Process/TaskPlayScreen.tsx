@@ -8,6 +8,7 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import { Box, Dialog, IconButton, Typography } from '@mui/material';
 
+import Fireworks from '../../components/Fireworks';
 import { type Task } from '../Settings/TaskItem';
 import { formatDurationWithSeconds } from '../Settings/duration';
 
@@ -31,11 +32,22 @@ const TaskPlayScreen = ({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [passedSeconds, setPassedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (open && closeButtonRef.current) {
-      closeButtonRef.current.focus();
+    if (open) {
+      // Устанавливаем фокус на Paper элемент Dialog с задержкой,
+      // чтобы Dialog успел отрендериться
+      const timeoutId = setTimeout(() => {
+        // Ищем Paper элемент Dialog (он имеет класс MuiDialog-paper)
+        const paperElement = document.querySelector('[role="dialog"]') as HTMLElement;
+        if (paperElement) {
+          paperElement.setAttribute('tabindex', '-1');
+          paperElement.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [open]);
 
@@ -71,15 +83,17 @@ const TaskPlayScreen = ({
   const remainingSeconds = Math.max(0, task.duration - passedSeconds);
 
   return (
-    <Dialog fullScreen open={open} onClose={onClose} aria-labelledby="task-play-title">
+    <Dialog fullScreen open={open} onClose={onClose} aria-labelledby="task-play-title" autoFocus>
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
+        <Fireworks active={showFireworks} onComplete={() => setShowFireworks(false)} />
         <IconButton
           ref={closeButtonRef}
           onClick={onClose}
@@ -211,6 +225,7 @@ const TaskPlayScreen = ({
                   onClose();
                 } else {
                   // Если задача еще не завершена, помечаем как завершенную
+                  setShowFireworks(true);
                   onMarkComplete(task.id);
                 }
               }}
