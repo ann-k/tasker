@@ -125,10 +125,18 @@ function Settings() {
   }, [editingTask, updateTaskInTree]);
 
   const handleAddTaskClick = () => {
-    setSelectedDuration('1 минута');
-    setDurationDialogMode('create');
-    setEditingDurationTaskId(null);
-    setIsCreateDialogOpen(true);
+    // Создаем новую задачу с длительностью 1 минута без модалки
+    const newId = generateTaskId();
+    setEditingTask({ id: newId, name: '' });
+
+    const newTask: Task = {
+      id: newId,
+      name: '',
+      duration: 60, // 1 минута
+      status: 'to-do',
+      subtasks: [],
+    };
+    setTasks((prevTasks) => [...prevTasks, newTask]);
   };
 
   const handleCreateDialogClose = () => {
@@ -333,12 +341,21 @@ function Settings() {
       );
     }
 
-    // Открываем диалог для выбора длительности подзадачи
-    setSelectedDuration('1 минута');
-    setDurationDialogMode('create');
-    setEditingDurationTaskId(null);
-    setParentTaskId(taskId);
-    setIsCreateDialogOpen(true);
+    const newSubtaskId = generateTaskId();
+    const newSubtask: Task = {
+      id: newSubtaskId,
+      name: '',
+      duration: 60, // 1 минута
+      status: 'to-do',
+      subtasks: [],
+    };
+    setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, taskId, newSubtask));
+
+    // Автоматически раскрываем задачу при добавлении подзадачи
+    setExpandedTasks((prev) => new Set(prev).add(taskId));
+
+    // Устанавливаем новую подзадачу в режим редактирования
+    setEditingTask({ id: newSubtaskId, name: '' });
     handleMenuClose();
   };
 
@@ -473,8 +490,6 @@ function Settings() {
         return;
       }
 
-      handleMenuClose();
-
       // Добавляем подзадачи из ответа
       if (data.subtasks && Array.isArray(data.subtasks) && data.subtasks.length > 0) {
         const newSubtasks: Task[] = data.subtasks.map((subtask: { title: string }) => ({
@@ -499,7 +514,6 @@ function Settings() {
     } catch (error) {
       console.error('Error during AI decomposition:', error);
     }
-
     handleMenuClose();
   };
 
@@ -604,7 +618,7 @@ function Settings() {
                       <ListItemIcon>
                         <AccessTimeIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText>Задать длительность</ListItemText>
+                      <ListItemText>Поменять длительность</ListItemText>
                     </MenuItem>
 
                     <Divider />

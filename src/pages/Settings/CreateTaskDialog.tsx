@@ -31,7 +31,7 @@ const CreateTaskDialog = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {mode === 'create' ? 'Создать новую задачу' : 'Задать длительность'}
+        {mode === 'create' ? 'Создать новую задачу' : 'Поменять длительность'}
       </DialogTitle>
       <DialogContent>
         <FormControl component="fieldset" fullWidth>
