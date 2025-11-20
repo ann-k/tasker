@@ -436,15 +436,15 @@ function Settings() {
     return [];
   };
 
-  const handleAIDecomposition = async () => {
-    const taskTitle = selectedTask.name;
-    const parentTask = findParentTask(tasks, selectedTask);
+  const handleAIDecomposition = async (task: Task) => {
+    const taskTitle = task.name;
+    const parentTask = findParentTask(tasks, task);
     const parentTitle = parentTask?.name || null;
     const siblingsTitles =
       parentTask === null
         ? []
-        : findSiblings(tasks, selectedTask)
-            .filter((t) => t.id !== selectedTask.id)
+        : findSiblings(tasks, task)
+            .filter((t) => t.id !== task.id)
             .map((t) => t.name)
             .filter((name) => name);
 
@@ -488,13 +488,13 @@ function Settings() {
         setTasks((prevTasks) => {
           let updatedTasks = prevTasks;
           newSubtasks.forEach((subtask) => {
-            updatedTasks = findTaskAndAddSubtask(updatedTasks, selectedTask.id, subtask);
+            updatedTasks = findTaskAndAddSubtask(updatedTasks, task.id, subtask);
           });
           return updatedTasks;
         });
 
         // Автоматически раскрываем задачу при добавлении подзадач
-        setExpandedTasks((prev) => new Set(prev).add(selectedTask.id));
+        setExpandedTasks((prev) => new Set(prev).add(task.id));
       }
     } catch (error) {
       console.error('Error during AI decomposition:', error);
@@ -591,7 +591,7 @@ function Settings() {
                       <ListItemText>Добавить подзадачу</ListItemText>
                     </MenuItem>
 
-                    <MenuItem onClick={() => selectedTask && handleAIDecomposition()}>
+                    <MenuItem onClick={() => selectedTask && handleAIDecomposition(selectedTask)}>
                       <ListItemIcon>
                         <ViewListIcon fontSize="small" />
                       </ListItemIcon>
