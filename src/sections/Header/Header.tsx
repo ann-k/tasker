@@ -12,13 +12,7 @@ function Header() {
   const menuLabels = routes.filter((route) => route.title);
 
   return (
-    <AppBar
-      position="static"
-      color="transparent"
-      elevation={2}
-      data-pw={`theme-${themeMode}`}
-      enableColorOnDark
-    >
+    <AppBar position="static" color="transparent" data-pw={`theme-${themeMode}`} enableColorOnDark>
       <BottomNavigation showLabels value={location.pathname} component="nav">
         {menuLabels.map(({ path, title, icon: Icon }) => (
           <BottomNavigationAction

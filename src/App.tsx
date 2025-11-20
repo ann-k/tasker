@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { BrowserRouter } from 'react-router';
 
-import { CssBaseline } from '@mui/material';
+import { Box, CssBaseline } from '@mui/material';
 
 import { withErrorHandler } from '@/error-handling';
 import AppErrorBoundaryFallback from '@/error-handling/fallbacks/App';
@@ -16,8 +16,14 @@ function App() {
       <CssBaseline />
       <HotKeys />
       <BrowserRouter>
-        <Pages />
-        <Header />
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ order: 2 }}>
+            <Header />
+          </Box>
+          <Box sx={{ order: 1 }}>
+            <Pages />
+          </Box>
+        </Box>
       </BrowserRouter>
     </Fragment>
   );
