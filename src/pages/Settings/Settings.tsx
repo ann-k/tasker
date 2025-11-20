@@ -5,8 +5,6 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 // import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
 // import ViewListIcon from '@mui/icons-material/ViewList';
@@ -343,6 +341,46 @@ function Settings() {
     });
   };
 
+  const handleMoveTaskUp = () => {
+    if (!selectedTaskId) return;
+
+    const taskIndex = tasks.findIndex((task) => task.id === selectedTaskId);
+    if (taskIndex <= 0) {
+      handleMenuClose();
+      return;
+    }
+
+    setTasks((prevTasks) => {
+      const newTasks = [...prevTasks];
+      const temp = newTasks[taskIndex];
+      newTasks[taskIndex] = newTasks[taskIndex - 1];
+      newTasks[taskIndex - 1] = temp;
+      return newTasks;
+    });
+
+    handleMenuClose();
+  };
+
+  const handleMoveTaskDown = () => {
+    if (!selectedTaskId) return;
+
+    const taskIndex = tasks.findIndex((task) => task.id === selectedTaskId);
+    if (taskIndex < 0 || taskIndex >= tasks.length - 1) {
+      handleMenuClose();
+      return;
+    }
+
+    setTasks((prevTasks) => {
+      const newTasks = [...prevTasks];
+      const temp = newTasks[taskIndex];
+      newTasks[taskIndex] = newTasks[taskIndex + 1];
+      newTasks[taskIndex + 1] = temp;
+      return newTasks;
+    });
+
+    handleMenuClose();
+  };
+
   return (
     <>
       <meta name="title" content="Настройка расписания" />
@@ -446,22 +484,35 @@ function Settings() {
 
                     <Divider />
 
-                    <MenuItem onClick={() => handleMenuItemClick('navigate')}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          gap: 2,
-                          alignItems: 'center',
-                          width: '100%',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <ArrowDownwardIcon fontSize="small" />
-                        <ArrowUpwardIcon fontSize="small" />
-                        <ChevronLeftIcon fontSize="small" />
-                        <ChevronRightIcon fontSize="small" />
-                      </Box>
-                    </MenuItem>
+                    {(() => {
+                      const taskIndex = selectedTaskId
+                        ? tasks.findIndex((task) => task.id === selectedTaskId)
+                        : -1;
+                      const isFirst = taskIndex === 0;
+                      const isLast = taskIndex === tasks.length - 1;
+
+                      return (
+                        <>
+                          {!isFirst && (
+                            <MenuItem onClick={handleMoveTaskUp}>
+                              <ListItemIcon>
+                                <ArrowUpwardIcon fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText>Подвинуть вверх</ListItemText>
+                            </MenuItem>
+                          )}
+
+                          {!isLast && (
+                            <MenuItem onClick={handleMoveTaskDown}>
+                              <ListItemIcon>
+                                <ArrowDownwardIcon fontSize="small" />
+                              </ListItemIcon>
+                              <ListItemText>Подвинуть вниз</ListItemText>
+                            </MenuItem>
+                          )}
+                        </>
+                      );
+                    })()}
 
                     <Divider />
 
