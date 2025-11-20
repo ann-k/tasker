@@ -4,6 +4,8 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import { Box, Dialog, IconButton, Typography } from '@mui/material';
 
 import { type Task } from '../Settings/TaskItem';
@@ -13,12 +15,18 @@ const TaskPlayScreen = ({
   task,
   open,
   onClose,
-  onComplete,
+  onMarkComplete,
+  onMoveToNext,
+  onMoveToPrevious,
+  canGoBack,
 }: {
   task: Task | null;
   open: boolean;
   onClose: () => void;
-  onComplete: (taskId: string) => void;
+  onMarkComplete: (taskId: string) => void;
+  onMoveToNext: () => void;
+  onMoveToPrevious: () => void;
+  canGoBack: boolean;
 }) => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [passedSeconds, setPassedSeconds] = useState(0);
@@ -39,7 +47,7 @@ const TaskPlayScreen = ({
   }, [open, task]);
 
   useEffect(() => {
-    if (open && task && !isPaused) {
+    if (open && task && !isPaused && task.status !== 'done') {
       intervalRef.current = setInterval(() => {
         setPassedSeconds((prev) => prev + 1);
       }, 1000);
@@ -157,6 +165,24 @@ const TaskPlayScreen = ({
           </Box>
 
           <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', mt: 2 }}>
+            {canGoBack && (
+              <IconButton
+                onClick={onMoveToPrevious}
+                aria-label="Вернуться к предыдущей задаче"
+                sx={{
+                  width: 64,
+                  height: 64,
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                <SkipPreviousIcon sx={{ fontSize: 32 }} />
+              </IconButton>
+            )}
+
             <IconButton
               onClick={() => setIsPaused(!isPaused)}
               aria-label={isPaused ? 'Возобновить таймер' : 'Поставить таймер на паузу'}
@@ -179,22 +205,34 @@ const TaskPlayScreen = ({
 
             <IconButton
               onClick={() => {
-                onComplete(task.id);
-                onClose();
+                if (task.status === 'done') {
+                  // Если задача уже завершена, переходим к следующей
+                  onMoveToNext();
+                  onClose();
+                } else {
+                  // Если задача еще не завершена, помечаем как завершенную
+                  onMarkComplete(task.id);
+                }
               }}
-              aria-label="Завершить задачу"
+              aria-label={
+                task.status === 'done' ? 'Перейти к следующей задаче' : 'Завершить задачу'
+              }
               sx={{
                 width: 120,
                 height: 120,
                 borderRadius: '50%',
-                bgcolor: 'success.main',
-                color: 'success.contrastText',
+                bgcolor: task.status === 'done' ? 'primary.main' : 'success.main',
+                color: task.status === 'done' ? 'primary.contrastText' : 'success.contrastText',
                 '&:hover': {
-                  bgcolor: 'success.dark',
+                  bgcolor: task.status === 'done' ? 'primary.dark' : 'success.dark',
                 },
               }}
             >
-              <CheckIcon sx={{ fontSize: 60 }} />
+              {task.status === 'done' ? (
+                <SkipNextIcon sx={{ fontSize: 60 }} />
+              ) : (
+                <CheckIcon sx={{ fontSize: 60 }} />
+              )}
             </IconButton>
           </Box>
         </Box>

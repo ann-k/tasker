@@ -36,7 +36,20 @@ function Process() {
   };
 
   const handleTaskSelect = (task: Task) => {
-    setSelectedTask(task);
+    // Если задача была выполнена, сбрасываем статус на 'to-do' при начале воспроизведения
+    if (task.status === 'done') {
+      setTasks((prevTasks) => {
+        const updated = resetTaskAndParentsStatus(prevTasks, task.id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        const updatedTask = findTaskInTree(updated, task.id);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
+        return updated;
+      });
+    } else {
+      setSelectedTask(task);
+    }
   };
 
   const handleCloseTaskScreen = () => {
@@ -65,6 +78,21 @@ function Process() {
     });
   };
 
+  const findTaskInTree = useCallback((tasksList: Task[], taskId: string): Task | null => {
+    for (const task of tasksList) {
+      if (task.id === taskId) {
+        return task;
+      }
+      if (task.subtasks && task.subtasks.length > 0) {
+        const found = findTaskInTree(task.subtasks, taskId);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  }, []);
+
   const markTaskAndSubtasksAsDone = (task: Task): Task => {
     return {
       ...task,
@@ -73,6 +101,33 @@ function Process() {
         ? task.subtasks.map((subtask) => markTaskAndSubtasksAsDone(subtask))
         : undefined,
     };
+  };
+
+  const resetTaskStatus = (task: Task): Task => {
+    return {
+      ...task,
+      status: 'to-do' as const,
+      subtasks: task.subtasks
+        ? task.subtasks.map((subtask) => resetTaskStatus(subtask))
+        : undefined,
+    };
+  };
+
+  const resetTaskAndParentsStatus = (tasksList: Task[], taskId: string): Task[] => {
+    // Сбрасываем статус самой задачи и всех её подзадач
+    let updated = updateTaskInTree(tasksList, taskId, (task) => resetTaskStatus(task));
+
+    // Сбрасываем статус всех родительских задач рекурсивно вверх по дереву
+    let parent = findParentTask(updated, taskId);
+    while (parent) {
+      updated = updateTaskInTree(updated, parent.id, (task) => ({
+        ...task,
+        status: 'to-do' as const,
+      }));
+      parent = findParentTask(updated, parent.id);
+    }
+
+    return updated;
   };
 
   const areAllSubtasksDone = (task: Task): boolean => {
@@ -133,8 +188,39 @@ function Process() {
     return leafTasks;
   }, []);
 
+  const collectAllLeafTasks = useCallback((task: Task): Task[] => {
+    const leafTasks: Task[] = [];
+
+    // Если у задачи нет подзадач или они пустые - это листовая задача
+    if (!task.subtasks || task.subtasks.length === 0) {
+      // Добавляем все листовые задачи, включая выполненные (для навигации назад)
+      leafTasks.push(task);
+    } else {
+      // Если есть подзадачи, рекурсивно обходим каждую
+      for (const subtask of task.subtasks) {
+        leafTasks.push(...collectAllLeafTasks(subtask));
+      }
+    }
+
+    return leafTasks;
+  }, []);
+
   const moveToNextTask = useCallback(
     (updatedTasks: Task[]) => {
+      // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
+      leafTasksQueueRef.current = leafTasksQueueRef.current.map((task) => {
+        const taskFromTree = findTaskInTree(updatedTasks, task.id);
+        return taskFromTree || task;
+      });
+
+      // Синхронизируем индекс с текущей задачей перед переходом к следующей
+      if (selectedTask) {
+        const actualIndex = leafTasksQueueRef.current.findIndex((t) => t.id === selectedTask.id);
+        if (actualIndex !== -1) {
+          currentTaskIndexRef.current = actualIndex;
+        }
+      }
+
       const nextIndex = currentTaskIndexRef.current + 1;
 
       // Если в очереди есть следующая задача, запускаем её
@@ -186,10 +272,10 @@ function Process() {
       currentTaskIndexRef.current = 0;
       currentTopLevelTaskRef.current = null;
     },
-    [findFirstIncompleteTask, collectLeafTasks],
+    [findFirstIncompleteTask, collectLeafTasks, selectedTask, findTaskInTree],
   );
 
-  const handleTaskComplete = (taskId: string) => {
+  const markTaskAsDone = (taskId: string) => {
     setTasks((prevTasks) => {
       // Помечаем задачу и все её подзадачи как выполненные
       let updated = updateTaskInTree(prevTasks, taskId, (task) => markTaskAndSubtasksAsDone(task));
@@ -211,13 +297,130 @@ function Process() {
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
-      // Переходим к следующей задаче после обновления
-      setTimeout(() => {
-        moveToNextTask(updated);
-      }, 0);
+      // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
+      leafTasksQueueRef.current = leafTasksQueueRef.current.map((task) => {
+        const taskFromTree = findTaskInTree(updated, task.id);
+        return taskFromTree || task;
+      });
+
+      // Обновляем selectedTask, если это та же задача
+      if (selectedTask && selectedTask.id === taskId) {
+        const updatedTask = findTaskInTree(updated, taskId);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
+      }
 
       return updated;
     });
+  };
+
+  const handleMoveToNext = () => {
+    setTasks((prevTasks) => {
+      // Переходим к следующей задаче
+      setTimeout(() => {
+        moveToNextTask(prevTasks);
+      }, 0);
+      return prevTasks;
+    });
+  };
+
+  const canMoveToPrevious = useCallback((): boolean => {
+    // Если есть предыдущая задача в текущей очереди
+    if (currentTaskIndexRef.current > 0) {
+      return true;
+    }
+
+    // Если это первая задача в очереди, проверяем, есть ли предыдущая верхняя задача
+    if (currentTopLevelTaskRef.current) {
+      const currentIndex = tasks.findIndex((t) => t.id === currentTopLevelTaskRef.current?.id);
+      return currentIndex > 0;
+    }
+
+    return false;
+  }, [tasks]);
+
+  const moveToPreviousTask = () => {
+    setTasks((prevTasks) => {
+      let previousTask: Task | null = null;
+
+      if (!selectedTask) {
+        return prevTasks;
+      }
+
+      // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
+      leafTasksQueueRef.current = leafTasksQueueRef.current.map((task) => {
+        const taskFromTree = findTaskInTree(prevTasks, task.id);
+        return taskFromTree || task;
+      });
+
+      // Всегда находим индекс текущей задачи по её ID в очереди
+      const currentTaskIndex = leafTasksQueueRef.current.findIndex((t) => t.id === selectedTask.id);
+
+      // Если задача не найдена в очереди, значит мы в неправильном состоянии
+      if (currentTaskIndex === -1) {
+        return prevTasks;
+      }
+
+      // Обновляем ref для синхронизации
+      currentTaskIndexRef.current = currentTaskIndex;
+
+      // Если есть предыдущая задача в текущей очереди
+      if (currentTaskIndex > 0) {
+        const prevIndex = currentTaskIndex - 1;
+        previousTask = leafTasksQueueRef.current[prevIndex];
+        currentTaskIndexRef.current = prevIndex;
+      } else {
+        // Ищем предыдущую верхнюю задачу
+        if (currentTopLevelTaskRef.current) {
+          const currentIndex = prevTasks.findIndex(
+            (t) => t.id === currentTopLevelTaskRef.current?.id,
+          );
+
+          if (currentIndex > 0) {
+            // Берем предыдущую верхнюю задачу
+            const previousTopLevelTask = prevTasks[currentIndex - 1];
+            const allLeafTasks = collectAllLeafTasks(previousTopLevelTask);
+
+            if (allLeafTasks.length > 0) {
+              // Берем последнюю листовую задачу из предыдущей верхней задачи
+              previousTask = allLeafTasks[allLeafTasks.length - 1];
+              leafTasksQueueRef.current = allLeafTasks;
+              currentTopLevelTaskRef.current = previousTopLevelTask;
+              currentTaskIndexRef.current = allLeafTasks.length - 1;
+            }
+          }
+        }
+      }
+
+      if (previousTask) {
+        // Сбрасываем статус задачи на 'to-do', если она была выполнена
+        let updated = prevTasks;
+        if (previousTask.status === 'done') {
+          updated = resetTaskAndParentsStatus(prevTasks, previousTask.id);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          // Обновляем previousTask из обновленного дерева
+          const updatedTask = findTaskInTree(updated, previousTask.id);
+          if (updatedTask) {
+            previousTask = updatedTask;
+          }
+          // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
+          leafTasksQueueRef.current = leafTasksQueueRef.current.map((task) => {
+            const taskFromTree = findTaskInTree(updated, task.id);
+            return taskFromTree || task;
+          });
+        }
+
+        setSelectedTask(previousTask);
+        return updated;
+      }
+
+      return prevTasks;
+    });
+  };
+
+  const handleMoveToPrevious = () => {
+    moveToPreviousTask();
   };
 
   // Автоматически помечаем родительские задачи как выполненные, если все их дети выполнены
@@ -391,7 +594,10 @@ function Process() {
         task={selectedTask}
         open={Boolean(selectedTask)}
         onClose={handleCloseTaskScreen}
-        onComplete={handleTaskComplete}
+        onMarkComplete={markTaskAsDone}
+        onMoveToNext={handleMoveToNext}
+        onMoveToPrevious={handleMoveToPrevious}
+        canGoBack={canMoveToPrevious()}
       />
     </>
   );
