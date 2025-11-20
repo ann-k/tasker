@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
@@ -28,7 +28,7 @@ const STORAGE_KEY = 'tasker-tasks';
 const DEBOUNCE_DELAY = 500;
 
 const generateTaskId = (): string => {
-  return Date.now().toString();
+  return crypto.randomUUID();
 };
 
 function Settings() {
@@ -478,6 +478,30 @@ function Settings() {
         console.error(`Error at stage: ${data.stage}`, data.error);
         return;
       }
+
+      handleMenuClose();
+
+      // Добавляем подзадачи из ответа
+      if (data.subtasks && Array.isArray(data.subtasks) && data.subtasks.length > 0) {
+        const newSubtasks: Task[] = data.subtasks.map((subtask: { title: string }) => ({
+          id: generateTaskId(),
+          name: subtask.title,
+          duration: 60, // 1 минута по умолчанию
+          status: 'to-do' as const,
+          subtasks: [],
+        }));
+
+        setTasks((prevTasks) => {
+          let updatedTasks = prevTasks;
+          newSubtasks.forEach((subtask) => {
+            updatedTasks = findTaskAndAddSubtask(updatedTasks, taskId, subtask);
+          });
+          return updatedTasks;
+        });
+
+        // Автоматически раскрываем задачу при добавлении подзадач
+        setExpandedTasks((prev) => new Set(prev).add(taskId));
+      }
     } catch (error) {
       console.error('Error during AI decomposition:', error);
     }
@@ -522,7 +546,7 @@ function Settings() {
               };
 
               return (
-                <>
+                <Fragment key={task.id}>
                   <TaskItem
                     key={task.id}
                     id={task.id}
@@ -632,7 +656,7 @@ function Settings() {
                       <ListItemText>Удалить задачу</ListItemText>
                     </MenuItem>
                   </Menu>
-                </>
+                </Fragment>
               );
             })}
           </List>
