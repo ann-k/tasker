@@ -9,7 +9,7 @@ import { Routes } from './types';
 const routes: Routes = [
   {
     component: asyncComponentLoader(() => import('@/pages/Process')),
-    path: '/process',
+    path: '/',
     title: 'Выполнение',
     icon: PlayIcon,
   },
