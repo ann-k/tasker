@@ -35,6 +35,7 @@ const TaskItem = ({
   image,
   subtasks,
   editingTaskId,
+  getEditingTaskName,
   expandedTasks,
   onToggleExpand,
   onNameChange,
@@ -51,6 +52,7 @@ const TaskItem = ({
   image?: string;
   subtasks?: Task[];
   editingTaskId?: string | null;
+  getEditingTaskName: (taskId: string) => string | null;
   expandedTasks: Set<string>;
   onToggleExpand: (taskId: string) => void;
   onNameChange: (value: string) => void;
@@ -66,6 +68,8 @@ const TaskItem = ({
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isEditing = editingTaskId === id;
   const isExpanded = expandedTasks.has(id);
+  const editingTaskName = getEditingTaskName(id);
+  const displayName = isEditing && editingTaskName !== null ? editingTaskName : name;
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -219,7 +223,7 @@ const TaskItem = ({
           primary={
             <TextField
               inputRef={inputRef}
-              value={name}
+              value={displayName}
               onChange={(e) => onNameChange(e.target.value)}
               onFocus={() => onNameFocus(id)}
               onBlur={() => onNameBlur(id)}
@@ -264,6 +268,7 @@ const TaskItem = ({
                 image={subtask.image}
                 subtasks={subtask.subtasks}
                 editingTaskId={editingTaskId}
+                getEditingTaskName={getEditingTaskName}
                 expandedTasks={expandedTasks}
                 onToggleExpand={onToggleExpand}
                 onNameChange={onNameChange}

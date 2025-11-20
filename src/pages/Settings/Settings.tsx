@@ -425,18 +425,21 @@ function Settings() {
         ) : (
           <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
             {tasks.map((task) => {
-              const isEditingTask = Boolean(editingTask) && task.id === editingTask?.id;
+              const getEditingTaskName = (taskId: string): string | null => {
+                return editingTask && editingTask.id === taskId ? editingTask.name : null;
+              };
 
               return (
                 <>
                   <TaskItem
                     key={task.id}
                     id={task.id}
-                    name={isEditingTask ? editingTask.name : task.name}
+                    name={task.name}
                     duration={task.duration}
                     image={task.image}
                     subtasks={task.subtasks}
                     editingTaskId={editingTask?.id ?? null}
+                    getEditingTaskName={getEditingTaskName}
                     expandedTasks={expandedTasks}
                     onToggleExpand={handleToggleExpand}
                     onNameChange={handleNameChange}
