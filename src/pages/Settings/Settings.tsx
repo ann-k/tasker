@@ -34,7 +34,7 @@ const generateTaskId = (): string => {
 function Settings() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
 
   const [tasks, setTasks] = useState<Task[]>(() => {
@@ -249,13 +249,14 @@ function Settings() {
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, taskId: string) => {
+    const task = findTaskInTree(tasks, taskId);
     setAnchorEl(event.currentTarget);
-    setSelectedTaskId(taskId);
+    setSelectedTask(task);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedTaskId(null);
+    setSelectedTask(null);
   };
 
   const handleImageUpload = (taskId: string, file: File) => {
@@ -273,23 +274,23 @@ function Settings() {
   };
 
   const handleMenuItemClick = (action: string) => {
-    if (!selectedTaskId) return;
+    if (!selectedTask) return;
 
     if (action === 'delete') {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
         debounceTimer.current = null;
       }
-      setTasks((prevTasks) => findTaskAndDelete(prevTasks, selectedTaskId));
-      if (editingTask?.id === selectedTaskId) setEditingTask(null);
+      setTasks((prevTasks) => findTaskAndDelete(prevTasks, selectedTask.id));
+      if (editingTask?.id === selectedTask.id) setEditingTask(null);
     } else if (action === 'upload-image') {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
-        if (file && selectedTaskId) {
-          handleImageUpload(selectedTaskId, file);
+        if (file && selectedTask) {
+          handleImageUpload(selectedTask.id, file);
         }
       };
       input.click();
@@ -354,9 +355,9 @@ function Settings() {
   };
 
   const handleMoveTaskUp = () => {
-    if (!selectedTaskId) return;
+    if (!selectedTask) return;
 
-    const taskIndex = tasks.findIndex((task) => task.id === selectedTaskId);
+    const taskIndex = tasks.findIndex((task) => task.id === selectedTask.id);
     if (taskIndex <= 0) {
       handleMenuClose();
       return;
@@ -374,9 +375,9 @@ function Settings() {
   };
 
   const handleMoveTaskDown = () => {
-    if (!selectedTaskId) return;
+    if (!selectedTask) return;
 
-    const taskIndex = tasks.findIndex((task) => task.id === selectedTaskId);
+    const taskIndex = tasks.findIndex((task) => task.id === selectedTask.id);
     if (taskIndex < 0 || taskIndex >= tasks.length - 1) {
       handleMenuClose();
       return;
@@ -435,22 +436,15 @@ function Settings() {
     return [];
   };
 
-  const handleAIDecomposition = async (taskId: string) => {
-    const task = findTaskInTree(tasks, taskId);
-    if (!task) {
-      console.error('Task not found');
-      handleMenuClose();
-      return;
-    }
-
-    const taskTitle = task.name;
-    const parentTask = findParentTask(tasks, task);
+  const handleAIDecomposition = async () => {
+    const taskTitle = selectedTask.name;
+    const parentTask = findParentTask(tasks, selectedTask);
     const parentTitle = parentTask?.name || null;
     const siblingsTitles =
       parentTask === null
         ? []
-        : findSiblings(tasks, task)
-            .filter((t) => t.id !== task.id)
+        : findSiblings(tasks, selectedTask)
+            .filter((t) => t.id !== selectedTask.id)
             .map((t) => t.name)
             .filter((name) => name);
 
@@ -494,13 +488,13 @@ function Settings() {
         setTasks((prevTasks) => {
           let updatedTasks = prevTasks;
           newSubtasks.forEach((subtask) => {
-            updatedTasks = findTaskAndAddSubtask(updatedTasks, taskId, subtask);
+            updatedTasks = findTaskAndAddSubtask(updatedTasks, selectedTask.id, subtask);
           });
           return updatedTasks;
         });
 
         // Автоматически раскрываем задачу при добавлении подзадач
-        setExpandedTasks((prev) => new Set(prev).add(taskId));
+        setExpandedTasks((prev) => new Set(prev).add(selectedTask.id));
       }
     } catch (error) {
       console.error('Error during AI decomposition:', error);
@@ -567,7 +561,7 @@ function Settings() {
                   />
                   <Menu
                     anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
+                    open={Boolean(anchorEl && selectedTask)}
                     onClose={handleMenuClose}
                     anchorOrigin={{
                       vertical: 'bottom',
@@ -590,16 +584,14 @@ function Settings() {
 
                     <Divider />
 
-                    <MenuItem onClick={() => selectedTaskId && handleAddSubtask(selectedTaskId)}>
+                    <MenuItem onClick={() => selectedTask && handleAddSubtask(selectedTask.id)}>
                       <ListItemIcon>
                         <AddIcon fontSize="small" />
                       </ListItemIcon>
                       <ListItemText>Добавить подзадачу</ListItemText>
                     </MenuItem>
 
-                    <MenuItem
-                      onClick={() => selectedTaskId && handleAIDecomposition(selectedTaskId)}
-                    >
+                    <MenuItem onClick={() => selectedTask && handleAIDecomposition()}>
                       <ListItemIcon>
                         <ViewListIcon fontSize="small" />
                       </ListItemIcon>
@@ -608,7 +600,7 @@ function Settings() {
 
                     <Divider />
 
-                    <MenuItem onClick={() => selectedTaskId && handleSetDuration(selectedTaskId)}>
+                    <MenuItem onClick={() => selectedTask && handleSetDuration(selectedTask.id)}>
                       <ListItemIcon>
                         <AccessTimeIcon fontSize="small" />
                       </ListItemIcon>
@@ -617,35 +609,26 @@ function Settings() {
 
                     <Divider />
 
-                    {(() => {
-                      const taskIndex = selectedTaskId
-                        ? tasks.findIndex((task) => task.id === selectedTaskId)
-                        : -1;
-                      const isFirst = taskIndex === 0;
-                      const isLast = taskIndex === tasks.length - 1;
+                    {selectedTask &&
+                      tasks.findIndex((task) => task.id === selectedTask.id) !== 0 && (
+                        <MenuItem onClick={handleMoveTaskUp}>
+                          <ListItemIcon>
+                            <ArrowUpwardIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Подвинуть вверх</ListItemText>
+                        </MenuItem>
+                      )}
 
-                      return (
-                        <>
-                          {!isFirst && (
-                            <MenuItem onClick={handleMoveTaskUp}>
-                              <ListItemIcon>
-                                <ArrowUpwardIcon fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Подвинуть вверх</ListItemText>
-                            </MenuItem>
-                          )}
-
-                          {!isLast && (
-                            <MenuItem onClick={handleMoveTaskDown}>
-                              <ListItemIcon>
-                                <ArrowDownwardIcon fontSize="small" />
-                              </ListItemIcon>
-                              <ListItemText>Подвинуть вниз</ListItemText>
-                            </MenuItem>
-                          )}
-                        </>
-                      );
-                    })()}
+                    {selectedTask &&
+                      tasks.findIndex((task) => task.id === selectedTask.id) !==
+                        tasks.length - 1 && (
+                        <MenuItem onClick={handleMoveTaskDown}>
+                          <ListItemIcon>
+                            <ArrowDownwardIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Подвинуть вниз</ListItemText>
+                        </MenuItem>
+                      )}
 
                     <Divider />
 
