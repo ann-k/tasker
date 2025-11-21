@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import { generateImageId, saveImage } from '@/utils/imageStorage';
+import { deleteImage, generateImageId, saveImage } from '@/utils/imageStorage';
 
 import CreateTaskDialog from './CreateTaskDialog';
 import TaskItem, { type Task } from './TaskItem';
@@ -289,6 +289,27 @@ function Settings() {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleDeleteImage = async (taskId: string) => {
+    const task = findTaskInTree(tasks, taskId);
+    if (!task?.image?.imageId) return;
+
+    try {
+      // Удаляем из IndexedDB
+      await deleteImage(task.image.imageId);
+      // Удаляем из задачи
+      setTasks((prevTasks) =>
+        updateTaskInTree(prevTasks, taskId, (t) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { image, ...rest } = t;
+          return rest;
+        }),
+      );
+    } catch (error) {
+      console.error('Failed to delete image from IndexedDB:', error);
+    }
+    handleMenuClose();
   };
 
   const handleMenuItemClick = (action: string) => {
@@ -762,105 +783,114 @@ function Settings() {
               };
 
               return (
-                <Fragment key={task.id}>
-                  <TaskItem
-                    key={task.id}
-                    id={task.id}
-                    name={task.name}
-                    duration={task.duration}
-                    image={task.image}
-                    subtasks={task.subtasks}
-                    editingTaskId={editingTask?.id ?? null}
-                    getEditingTaskName={getEditingTaskName}
-                    expandedTasks={expandedTasks}
-                    onToggleExpand={handleToggleExpand}
-                    onNameChange={handleNameChange}
-                    onNameFocus={handleNameFocus}
-                    onNameBlur={handleNameBlur}
-                    onMenuOpen={handleMenuOpen}
-                    onAddSubtask={handleAddSubtask}
-                    onImageUpload={handleImageUpload}
-                  />
-                  <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl && selectedTask)}
-                    onClose={handleMenuClose}
-                    anchorOrigin={{
-                      vertical: 'bottom',
-                      horizontal: 'right',
-                    }}
-                  >
-                    <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
-                      <ListItemIcon>
-                        <ImageIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>Загрузить картинку</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => selectedTask && handleAIGenerateImage(selectedTask)}>
-                      <ListItemIcon>
-                        <AutoAwesomeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>ИИ картинка</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => selectedTask && handleAddSubtask(selectedTask.id)}>
-                      <ListItemIcon>
-                        <AddIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>Добавить подзадачу</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => selectedTask && handleAIDecomposition(selectedTask)}>
-                      <ListItemIcon>
-                        <ViewListIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>ИИ декомпозиция</ListItemText>
-                    </MenuItem>
-
-                    {selectedTask &&
-                      (!selectedTask.subtasks || selectedTask.subtasks.length === 0) && (
-                        <MenuItem onClick={() => handleSetDuration(selectedTask)}>
-                          <ListItemIcon>
-                            <AccessTimeIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText>Поменять длительность</ListItemText>
-                        </MenuItem>
-                      )}
-
-                    {selectedTask &&
-                      tasks.findIndex((task) => task.id === selectedTask.id) !== 0 && (
-                        <MenuItem onClick={handleMoveTaskUp}>
-                          <ListItemIcon>
-                            <ArrowUpwardIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText>Подвинуть вверх</ListItemText>
-                        </MenuItem>
-                      )}
-
-                    {selectedTask &&
-                      tasks.findIndex((task) => task.id === selectedTask.id) !==
-                        tasks.length - 1 && (
-                        <MenuItem onClick={handleMoveTaskDown}>
-                          <ListItemIcon>
-                            <ArrowDownwardIcon fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText>Подвинуть вниз</ListItemText>
-                        </MenuItem>
-                      )}
-
-                    <MenuItem onClick={() => handleMenuItemClick('delete')}>
-                      <ListItemIcon>
-                        <DeleteIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText>Удалить задачу</ListItemText>
-                    </MenuItem>
-                  </Menu>
-                </Fragment>
+                <TaskItem
+                  key={task.id}
+                  id={task.id}
+                  name={task.name}
+                  duration={task.duration}
+                  image={task.image}
+                  subtasks={task.subtasks}
+                  editingTaskId={editingTask?.id ?? null}
+                  getEditingTaskName={getEditingTaskName}
+                  expandedTasks={expandedTasks}
+                  onToggleExpand={handleToggleExpand}
+                  onNameChange={handleNameChange}
+                  onNameFocus={handleNameFocus}
+                  onNameBlur={handleNameBlur}
+                  onMenuOpen={handleMenuOpen}
+                  onAddSubtask={handleAddSubtask}
+                  onImageUpload={handleImageUpload}
+                />
               );
             })}
           </List>
         )}
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl && selectedTask)}
+          onClose={handleMenuClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+        >
+          {selectedTask?.image && (
+            <MenuItem onClick={() => selectedTask && handleDeleteImage(selectedTask.id)}>
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Удалить картинку</ListItemText>
+            </MenuItem>
+          )}
+
+          {!selectedTask?.image && (
+            <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
+              <ListItemIcon>
+                <ImageIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Загрузить картинку</ListItemText>
+            </MenuItem>
+          )}
+
+          {!selectedTask?.image && (
+            <MenuItem onClick={() => selectedTask && handleAIGenerateImage(selectedTask)}>
+              <ListItemIcon>
+                <AutoAwesomeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>ИИ картинка</ListItemText>
+            </MenuItem>
+          )}
+
+          <MenuItem onClick={() => selectedTask && handleAddSubtask(selectedTask.id)}>
+            <ListItemIcon>
+              <AddIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Добавить подзадачу</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={() => selectedTask && handleAIDecomposition(selectedTask)}>
+            <ListItemIcon>
+              <ViewListIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>ИИ декомпозиция</ListItemText>
+          </MenuItem>
+
+          {selectedTask && (!selectedTask.subtasks || selectedTask.subtasks.length === 0) && (
+            <MenuItem onClick={() => handleSetDuration(selectedTask)}>
+              <ListItemIcon>
+                <AccessTimeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Поменять длительность</ListItemText>
+            </MenuItem>
+          )}
+
+          {selectedTask && tasks.findIndex((task) => task.id === selectedTask.id) !== 0 && (
+            <MenuItem onClick={handleMoveTaskUp}>
+              <ListItemIcon>
+                <ArrowUpwardIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Подвинуть вверх</ListItemText>
+            </MenuItem>
+          )}
+
+          {selectedTask &&
+            tasks.findIndex((task) => task.id === selectedTask.id) !== tasks.length - 1 && (
+              <MenuItem onClick={handleMoveTaskDown}>
+                <ListItemIcon>
+                  <ArrowDownwardIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Подвинуть вниз</ListItemText>
+              </MenuItem>
+            )}
+
+          <MenuItem onClick={() => handleMenuItemClick('delete')}>
+            <ListItemIcon>
+              <DeleteIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Удалить задачу</ListItemText>
+          </MenuItem>
+        </Menu>
 
         <Button
           variant="contained"
