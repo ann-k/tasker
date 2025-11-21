@@ -99,7 +99,7 @@ const ProcessTaskItem = ({
         {image && image.status === 'ready' && imageUrl && (
           <ListItemIcon
             sx={{
-              minWidth: 48,
+              minWidth: 120,
               mr: 1.5,
               display: 'flex',
               alignItems: 'center',
@@ -107,8 +107,8 @@ const ProcessTaskItem = ({
           >
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: 120,
+                height: 70,
                 borderRadius: 1,
                 overflow: 'hidden',
                 flexShrink: 0,
