@@ -4,7 +4,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-// import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -18,6 +18,8 @@ import {
   MenuItem,
   Typography,
 } from '@mui/material';
+
+import { generateImageId, saveImage } from '@/utils/imageStorage';
 
 import CreateTaskDialog from './CreateTaskDialog';
 import TaskItem, { type Task } from './TaskItem';
@@ -265,16 +267,26 @@ function Settings() {
     setSelectedTask(null);
   };
 
-  const handleImageUpload = (taskId: string, file: File) => {
+  const handleImageUpload = async (taskId: string, file: File) => {
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const base64String = reader.result as string;
-      setTasks((prevTasks) =>
-        updateTaskInTree(prevTasks, taskId, (task) => ({
-          ...task,
-          image: base64String,
-        })),
-      );
+      const imageId = generateImageId();
+
+      try {
+        await saveImage(imageId, base64String);
+        setTasks((prevTasks) =>
+          updateTaskInTree(prevTasks, taskId, (task) => ({
+            ...task,
+            image: {
+              imageId,
+              status: 'ready',
+            },
+          })),
+        );
+      } catch (error) {
+        console.error('Failed to save image to IndexedDB:', error);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -515,6 +527,198 @@ function Settings() {
     handleMenuClose();
   };
 
+  const pollImageStatus = async (operationId: string): Promise<string> => {
+    while (true) {
+      await new Promise((resolve) => setTimeout(resolve, 10000)); // 10 секунд
+
+      console.log('[IMG] Check status:', {
+        operationId,
+        timestamp: new Date().toISOString(),
+      });
+
+      try {
+        const checkResponse = await fetch('https://cloud.dab512.ru/tasker/api/generate_image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'check',
+            operation_id: operationId,
+          }),
+        });
+
+        const checkData = await checkResponse.json();
+
+        console.log('[IMG] Status response:', {
+          operationId,
+          status: checkData.status,
+          timestamp: new Date().toISOString(),
+        });
+
+        if (checkData.status === 'ready') {
+          const imagePreview = checkData.image ? checkData.image.substring(0, 100) + '...' : 'null';
+          console.log('[IMG] Image ready!', {
+            operationId,
+            imagePreview,
+            fullImageLength: checkData.image?.length || 0,
+          });
+          return checkData.image;
+        }
+
+        if (checkData.status === 'error') {
+          throw new Error('Image generation failed');
+        }
+
+        // status === 'generating' - продолжаем polling
+      } catch (error) {
+        console.error('[IMG] Error during status check:', error);
+        throw error;
+      }
+    }
+  };
+
+  const handleAIGenerateImage = async (task: Task, retryCount = 0) => {
+    const MAX_RETRIES = 3;
+
+    // Закрываем меню сразу после нажатия
+    if (retryCount === 0) {
+      handleMenuClose();
+      // Устанавливаем статус generating (временно используем пустой imageId)
+      const tempImageId = generateImageId();
+      setTasks((prevTasks) =>
+        updateTaskInTree(prevTasks, task.id, (t) => ({
+          ...t,
+          image: {
+            imageId: tempImageId,
+            status: 'generating',
+          },
+        })),
+      );
+    }
+
+    console.log('[IMG] Start generation:', {
+      taskId: task.id,
+      taskTitle: task.name,
+      retryCount: retryCount + 1,
+      maxRetries: MAX_RETRIES,
+    });
+
+    try {
+      // Шаг 1: Запуск генерации
+      const startResponse = await fetch('https://cloud.dab512.ru/tasker/api/generate_image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'start',
+          prompt: task.name,
+        }),
+      });
+
+      const startData = await startResponse.json();
+
+      // Ошибка на этапе генерации описания
+      if (!startData.success && startData.stage === 'description') {
+        console.error('[IMG] YandexGPT failed after 3 attempts:', {
+          stage: startData.stage,
+          error: startData.error,
+          retryCount: retryCount + 1,
+        });
+        throw new Error('Failed to generate image description');
+      }
+
+      // Ошибка на этапе запуска YandexArt
+      if (!startData.success && startData.stage === 'image') {
+        console.error('[IMG] YandexArt failed to start:', {
+          stage: startData.stage,
+          error: startData.error,
+          retryCount: retryCount + 1,
+        });
+        throw new Error('Failed to start image generation');
+      }
+
+      // Общая ошибка валидации
+      if (!startData.success) {
+        console.error('[IMG] Start request failed:', {
+          error: startData.error,
+          retryCount: retryCount + 1,
+        });
+        throw new Error(startData.error || 'Failed to start image generation');
+      }
+
+      // Сохраняем описание для alt-атрибута
+      const imageDescription = startData.image_description;
+      const operationId = startData.operation_id;
+
+      console.log('[IMG] Generation started:', {
+        operationId,
+        imageDescription: imageDescription ? imageDescription.slice(0, 50) + '...' : 'null',
+        status: startData.status,
+      });
+
+      // Шаг 2: Polling статуса
+      const image = await pollImageStatus(operationId);
+
+      console.log('[IMG] Generation completed successfully!', {
+        operationId,
+        taskId: task.id,
+        taskTitle: task.name,
+        imageDescription,
+        imageLength: image.length,
+        imagePreview: image.substring(0, 100) + '...',
+      });
+
+      // Сохраняем изображение в IndexedDB
+      const imageId = generateImageId();
+      try {
+        await saveImage(imageId, image);
+        // Сохраняем imageId в задачу
+        setTasks((prevTasks) =>
+          updateTaskInTree(prevTasks, task.id, (t) => ({
+            ...t,
+            image: {
+              imageId,
+              status: 'ready',
+            },
+          })),
+        );
+      } catch (error) {
+        console.error('Failed to save image to IndexedDB:', error);
+        // Убираем image при ошибке сохранения
+        setTasks((prevTasks) =>
+          updateTaskInTree(prevTasks, task.id, (t) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { image, ...rest } = t;
+            return rest;
+          }),
+        );
+      }
+    } catch (error) {
+      // Retry логика
+      if (retryCount < MAX_RETRIES - 1) {
+        console.log(`[IMG] Retry ${retryCount + 1}/${MAX_RETRIES}`);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return handleAIGenerateImage(task, retryCount + 1);
+      }
+
+      // Все попытки исчерпаны - убираем image
+      console.error('[IMG] All retry attempts failed:', {
+        taskId: task.id,
+        taskTitle: task.name,
+        retryCount: retryCount + 1,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      setTasks((prevTasks) =>
+        updateTaskInTree(prevTasks, task.id, (t) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { image, ...rest } = t;
+          return rest;
+        }),
+      );
+
+      handleMenuClose();
+    }
+  };
+
   return (
     <>
       <meta name="title" content="Настройка расписания" />
@@ -593,12 +797,12 @@ function Settings() {
                       <ListItemText>Загрузить картинку</ListItemText>
                     </MenuItem>
 
-                    {/* <MenuItem onClick={() => handleMenuItemClick('ai-image')}>
+                    <MenuItem onClick={() => selectedTask && handleAIGenerateImage(selectedTask)}>
                       <ListItemIcon>
                         <AutoAwesomeIcon fontSize="small" />
                       </ListItemIcon>
                       <ListItemText>ИИ картинка</ListItemText>
-                    </MenuItem> */}
+                    </MenuItem>
 
                     <MenuItem onClick={() => selectedTask && handleAddSubtask(selectedTask.id)}>
                       <ListItemIcon>

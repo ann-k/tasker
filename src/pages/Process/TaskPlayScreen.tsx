@@ -8,6 +8,8 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import { Box, Dialog, IconButton, Typography } from '@mui/material';
 
+import { useImageUrl } from '@/hooks/useImageUrl';
+
 import Fireworks from '../../components/Fireworks';
 import { type Task } from '../Settings/TaskItem';
 import { formatDurationWithSeconds } from '../Settings/duration';
@@ -34,6 +36,7 @@ const TaskPlayScreen = ({
   const [isPaused, setIsPaused] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const imageUrl = useImageUrl(task?.image?.status === 'ready' ? task.image.imageId : undefined);
 
   useEffect(() => {
     if (open) {
@@ -118,7 +121,7 @@ const TaskPlayScreen = ({
             gap: 3,
           }}
         >
-          {task.image && (
+          {task.image && task.image.status === 'ready' && imageUrl && (
             <Box
               sx={{
                 width: '100%',
@@ -130,7 +133,7 @@ const TaskPlayScreen = ({
               }}
             >
               <img
-                src={task.image}
+                src={imageUrl}
                 alt={task.name || ''}
                 style={{
                   width: '100%',

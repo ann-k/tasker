@@ -33,6 +33,7 @@
     "@mui/material": "^6.4.6",
     "@toolpad/core": "^0.12.1",
     "fireworks-js": "^2.10.8",
+    "idb": "^8.0.3",
     "jotai": "^2.12.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

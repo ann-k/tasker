@@ -5,6 +5,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Box,
+  CircularProgress,
   Collapse,
   IconButton,
   List,
@@ -16,6 +17,8 @@ import {
 } from '@mui/material';
 import { Stack } from '@mui/system';
 
+import { useImageUrl } from '@/hooks/useImageUrl';
+
 import { calculateSubtasksDuration, formatDuration } from './duration';
 
 export type Task = {
@@ -23,7 +26,10 @@ export type Task = {
   name: string;
   duration: number; // длительность в секундах
   status: 'to-do' | 'doing' | 'done';
-  image?: string;
+  image?: {
+    imageId: string; // ID изображения в IndexedDB
+    status: 'generating' | 'ready';
+  };
   subtasks?: Task[];
 };
 
@@ -48,7 +54,10 @@ const TaskItem = ({
   id: string;
   name: string;
   duration: number;
-  image?: string;
+  image?: {
+    imageId: string; // ID изображения в IndexedDB
+    status: 'generating' | 'ready';
+  };
   subtasks?: Task[];
   editingTaskId?: string | null;
   getEditingTaskName: (taskId: string) => string | null;
@@ -69,6 +78,7 @@ const TaskItem = ({
   const editingTaskName = getEditingTaskName(id);
   const displayName = isEditing && editingTaskName !== null ? editingTaskName : name;
   const displayDuration = hasSubtasks ? calculateSubtasksDuration(subtasks) : duration;
+  const imageUrl = useImageUrl(image?.status === 'ready' ? image.imageId : undefined);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -147,7 +157,7 @@ const TaskItem = ({
         {image && (
           <ListItemIcon
             sx={{
-              minWidth: 48,
+              minWidth: 120,
               mr: 1.5,
               display: 'flex',
               alignItems: 'center',
@@ -155,23 +165,33 @@ const TaskItem = ({
           >
             <Box
               sx={{
-                width: 40,
-                height: 40,
+                width: 120,
+                height: 70,
                 borderRadius: 1,
                 overflow: 'hidden',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: image.status === 'generating' ? 'action.hover' : 'transparent',
               }}
+              role={image.status === 'generating' ? 'status' : undefined}
+              aria-busy={image.status === 'generating' ? true : undefined}
             >
-              <img
-                src={image}
-                alt=""
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-                aria-hidden="true"
-              />
+              {image.status === 'generating' ? (
+                <CircularProgress size={24} aria-label="Генерируем картинку" />
+              ) : imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                  aria-hidden="true"
+                />
+              ) : null}
             </Box>
           </ListItemIcon>
         )}

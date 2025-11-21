@@ -11,6 +11,8 @@ import {
   Typography,
 } from '@mui/material';
 
+import { useImageUrl } from '@/hooks/useImageUrl';
+
 import { type Task } from '../Settings/TaskItem';
 import { calculateSubtasksDuration, formatDuration } from '../Settings/duration';
 
@@ -28,7 +30,10 @@ const ProcessTaskItem = ({
   id: string;
   name: string;
   duration: number;
-  image?: string;
+  image?: {
+    imageId: string; // ID изображения в IndexedDB
+    status: 'generating' | 'ready';
+  };
   status: 'to-do' | 'doing' | 'done';
   subtasks?: Task[];
   expandedTasks: Set<string>;
@@ -39,6 +44,7 @@ const ProcessTaskItem = ({
   const isExpanded = expandedTasks.has(id);
   const isCompleted = status === 'done';
   const displayDuration = hasSubtasks ? calculateSubtasksDuration(subtasks) : duration;
+  const imageUrl = useImageUrl(image?.status === 'ready' ? image.imageId : undefined);
 
   const handleChevronClick = () => {
     onToggleExpand(id);
@@ -90,7 +96,7 @@ const ProcessTaskItem = ({
           </ListItemIcon>
         )}
 
-        {image && (
+        {image && image.status === 'ready' && imageUrl && (
           <ListItemIcon
             sx={{
               minWidth: 48,
@@ -109,7 +115,7 @@ const ProcessTaskItem = ({
               }}
             >
               <img
-                src={image}
+                src={imageUrl}
                 alt=""
                 style={{
                   width: '100%',
