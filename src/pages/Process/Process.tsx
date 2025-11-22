@@ -512,7 +512,7 @@ function Process() {
 
   return (
     <>
-      <meta name="title" content="Процесс" />
+      <meta name="title" content="Расписание" />
       <Box
         sx={{
           display: 'flex',
@@ -532,7 +532,7 @@ function Process() {
             lineHeight: 1.2,
           }}
         >
-          Процесс
+          Расписание
         </Typography>
 
         {tasks.length === 0 ? (

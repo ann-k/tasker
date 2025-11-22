@@ -1,4 +1,4 @@
-import PlayIcon from '@mui/icons-material/PlayArrow';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StarIcon from '@mui/icons-material/Star';
 
@@ -10,8 +10,8 @@ const routes: Routes = [
   {
     component: asyncComponentLoader(() => import('@/pages/Process')),
     path: '/',
-    title: 'Выполнение',
-    icon: PlayIcon,
+    title: 'Расписание',
+    icon: PlaylistAddCheckIcon,
   },
   {
     component: asyncComponentLoader(() => import('@/pages/Accomplishments')),
