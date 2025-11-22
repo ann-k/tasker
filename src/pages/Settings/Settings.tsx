@@ -848,15 +848,6 @@ function Settings() {
             horizontal: 'right',
           }}
         >
-          {selectedTask?.image && (
-            <MenuItem onClick={() => selectedTask && handleDeleteImage(selectedTask.id)}>
-              <ListItemIcon>
-                <DeleteIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Удалить картинку</ListItemText>
-            </MenuItem>
-          )}
-
           {!selectedTask?.image && (
             <MenuItem onClick={() => handleMenuItemClick('upload-image')}>
               <ListItemIcon>
@@ -913,6 +904,15 @@ function Settings() {
                 <ArrowDownwardIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>Подвинуть вниз</ListItemText>
+            </MenuItem>
+          )}
+
+          {selectedTask?.image && (
+            <MenuItem onClick={() => selectedTask && handleDeleteImage(selectedTask.id)}>
+              <ListItemIcon>
+                <DeleteIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Удалить картинку</ListItemText>
             </MenuItem>
           )}
 
