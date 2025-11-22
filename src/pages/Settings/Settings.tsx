@@ -402,22 +402,57 @@ function Settings() {
     });
   };
 
+  const moveTaskInSiblings = (
+    tasksList: Task[],
+    taskId: string,
+    direction: 'up' | 'down',
+  ): Task[] => {
+    // Check top level
+    const topLevelIndex = tasksList.findIndex((t) => t.id === taskId);
+    if (topLevelIndex !== -1) {
+      if (direction === 'up' && topLevelIndex <= 0) return tasksList;
+      if (direction === 'down' && topLevelIndex >= tasksList.length - 1) return tasksList;
+
+      const newTasks = [...tasksList];
+      const targetIndex = direction === 'up' ? topLevelIndex - 1 : topLevelIndex + 1;
+      const temp = newTasks[topLevelIndex];
+      newTasks[topLevelIndex] = newTasks[targetIndex];
+      newTasks[targetIndex] = temp;
+      return newTasks;
+    }
+
+    // Check in subtasks
+    return tasksList.map((task) => {
+      if (task.subtasks && task.subtasks.length > 0) {
+        const subtaskIndex = task.subtasks.findIndex((subtask) => subtask.id === taskId);
+        if (subtaskIndex !== -1) {
+          if (direction === 'up' && subtaskIndex <= 0) return task;
+          if (direction === 'down' && subtaskIndex >= task.subtasks.length - 1) return task;
+
+          const newSubtasks = [...task.subtasks];
+          const targetIndex = direction === 'up' ? subtaskIndex - 1 : subtaskIndex + 1;
+          const temp = newSubtasks[subtaskIndex];
+          newSubtasks[subtaskIndex] = newSubtasks[targetIndex];
+          newSubtasks[targetIndex] = temp;
+          return {
+            ...task,
+            subtasks: newSubtasks,
+          };
+        }
+
+        return {
+          ...task,
+          subtasks: moveTaskInSiblings(task.subtasks, taskId, direction),
+        };
+      }
+      return task;
+    });
+  };
+
   const handleMoveTaskUp = () => {
     if (!selectedTask) return;
 
-    const taskIndex = tasks.findIndex((task) => task.id === selectedTask.id);
-    if (taskIndex <= 0) {
-      handleMenuClose();
-      return;
-    }
-
-    setTasks((prevTasks) => {
-      const newTasks = [...prevTasks];
-      const temp = newTasks[taskIndex];
-      newTasks[taskIndex] = newTasks[taskIndex - 1];
-      newTasks[taskIndex - 1] = temp;
-      return newTasks;
-    });
+    setTasks((prevTasks) => moveTaskInSiblings(prevTasks, selectedTask.id, 'up'));
 
     handleMenuClose();
   };
@@ -425,19 +460,7 @@ function Settings() {
   const handleMoveTaskDown = () => {
     if (!selectedTask) return;
 
-    const taskIndex = tasks.findIndex((task) => task.id === selectedTask.id);
-    if (taskIndex < 0 || taskIndex >= tasks.length - 1) {
-      handleMenuClose();
-      return;
-    }
-
-    setTasks((prevTasks) => {
-      const newTasks = [...prevTasks];
-      const temp = newTasks[taskIndex];
-      newTasks[taskIndex] = newTasks[taskIndex + 1];
-      newTasks[taskIndex + 1] = temp;
-      return newTasks;
-    });
+    setTasks((prevTasks) => moveTaskInSiblings(prevTasks, selectedTask.id, 'down'));
 
     handleMenuClose();
   };
@@ -482,6 +505,20 @@ function Settings() {
       }
     }
     return [];
+  };
+
+  const canMoveTaskUp = (task: Task): boolean => {
+    const siblings = findSiblings(tasks, task);
+    if (siblings.length === 0) return false;
+    const taskIndex = siblings.findIndex((t) => t.id === task.id);
+    return taskIndex > 0;
+  };
+
+  const canMoveTaskDown = (task: Task): boolean => {
+    const siblings = findSiblings(tasks, task);
+    if (siblings.length === 0) return false;
+    const taskIndex = siblings.findIndex((t) => t.id === task.id);
+    return taskIndex >= 0 && taskIndex < siblings.length - 1;
   };
 
   const handleAIDecomposition = async (task: Task) => {
@@ -866,7 +903,7 @@ function Settings() {
             </MenuItem>
           )}
 
-          {selectedTask && tasks.findIndex((task) => task.id === selectedTask.id) !== 0 && (
+          {selectedTask && canMoveTaskUp(selectedTask) && (
             <MenuItem onClick={handleMoveTaskUp}>
               <ListItemIcon>
                 <ArrowUpwardIcon fontSize="small" />
@@ -875,15 +912,14 @@ function Settings() {
             </MenuItem>
           )}
 
-          {selectedTask &&
-            tasks.findIndex((task) => task.id === selectedTask.id) !== tasks.length - 1 && (
-              <MenuItem onClick={handleMoveTaskDown}>
-                <ListItemIcon>
-                  <ArrowDownwardIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>Подвинуть вниз</ListItemText>
-              </MenuItem>
-            )}
+          {selectedTask && canMoveTaskDown(selectedTask) && (
+            <MenuItem onClick={handleMoveTaskDown}>
+              <ListItemIcon>
+                <ArrowDownwardIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Подвинуть вниз</ListItemText>
+            </MenuItem>
+          )}
 
           <MenuItem onClick={() => handleMenuItemClick('delete')}>
             <ListItemIcon>
