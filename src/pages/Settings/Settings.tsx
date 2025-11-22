@@ -170,7 +170,12 @@ function Settings() {
         status: 'to-do',
         subtasks: [],
       };
-      setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, parentTaskId, newSubtask));
+      setTasks((prevTasks) => {
+        let updated = findTaskAndAddSubtask(prevTasks, parentTaskId, newSubtask);
+        // If parent task is done, mark it and all its parents as incomplete
+        updated = markTaskAndParentsAsIncomplete(updated, parentTaskId);
+        return updated;
+      });
 
       // Автоматически раскрываем задачу при добавлении подзадачи
       setExpandedTasks((prev) => new Set(prev).add(parentTaskId));
@@ -378,7 +383,12 @@ function Settings() {
       status: 'to-do',
       subtasks: [],
     };
-    setTasks((prevTasks) => findTaskAndAddSubtask(prevTasks, taskId, newSubtask));
+    setTasks((prevTasks) => {
+      let updated = findTaskAndAddSubtask(prevTasks, taskId, newSubtask);
+      // If parent task is done, mark it and all its parents as incomplete
+      updated = markTaskAndParentsAsIncomplete(updated, taskId);
+      return updated;
+    });
 
     // Автоматически раскрываем задачу при добавлении подзадачи
     setExpandedTasks((prev) => new Set(prev).add(taskId));
@@ -482,6 +492,56 @@ function Settings() {
     return null;
   };
 
+  const findParentTaskById = (
+    tasksList: Task[],
+    taskId: string,
+    parent: Task | null = null,
+  ): Task | null => {
+    for (const t of tasksList) {
+      if (t.id === taskId) {
+        return parent;
+      }
+      if (t.subtasks && t.subtasks.length > 0) {
+        const found = findParentTaskById(t.subtasks, taskId, t);
+        if (found !== null) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  const markTaskAndParentsAsIncomplete = (tasksList: Task[], taskId: string): Task[] => {
+    let updated = [...tasksList];
+    const task = findTaskInTree(updated, taskId);
+
+    if (!task) {
+      return updated;
+    }
+
+    // If the task itself is done, mark it as to-do
+    if (task.status === 'done') {
+      updated = updateTaskInTree(updated, taskId, (t) => ({
+        ...t,
+        status: 'to-do',
+      }));
+    }
+
+    // Mark all parent tasks as to-do recursively
+    let parent = findParentTaskById(updated, taskId);
+    while (parent) {
+      if (parent.status === 'done') {
+        updated = updateTaskInTree(updated, parent.id, (t) => ({
+          ...t,
+          status: 'to-do',
+        }));
+      }
+      parent = findParentTaskById(updated, parent.id);
+    }
+
+    return updated;
+  };
+
   const findSiblings = (tasksList: Task[], task: Task): Task[] => {
     // Ищем задачу на верхнем уровне
     const topLevelIndex = tasksList.findIndex((t) => t.id === task.id);
@@ -568,6 +628,8 @@ function Settings() {
           newSubtasks.forEach((subtask) => {
             updatedTasks = findTaskAndAddSubtask(updatedTasks, task.id, subtask);
           });
+          // If parent task is done, mark it and all its parents as incomplete
+          updatedTasks = markTaskAndParentsAsIncomplete(updatedTasks, task.id);
           return updatedTasks;
         });
 
