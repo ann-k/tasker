@@ -541,8 +541,6 @@ function Settings() {
       siblings: siblingsTitles,
     };
 
-    console.log(body);
-
     try {
       const startResponse = await fetch('https://cloud.dab512.ru/tasker/api/decompose', {
         method: 'POST',
@@ -551,7 +549,6 @@ function Settings() {
       });
 
       const data = await startResponse.json();
-      console.log(data);
 
       if (!data.success) {
         console.error(`Error at stage: ${data.stage}`, data.error);
@@ -578,6 +575,35 @@ function Settings() {
 
         // Автоматически раскрываем задачу при добавлении подзадач
         setExpandedTasks((prev) => new Set(prev).add(task.id));
+
+        // Сразу устанавливаем статус generating для всех подзадач (чтобы показать лоудер)
+        setTasks((prevTasks) => {
+          let updatedTasks = prevTasks;
+          newSubtasks.forEach((subtask) => {
+            const tempImageId = generateImageId();
+            updatedTasks = updateTaskInTree(updatedTasks, subtask.id, (t) => ({
+              ...t,
+              image: {
+                imageId: tempImageId,
+                status: 'generating',
+              },
+            }));
+          });
+          return updatedTasks;
+        });
+
+        // Запускаем генерацию картинок последовательно с паузой между запросами
+        setTimeout(async () => {
+          for (let i = 0; i < newSubtasks.length; i++) {
+            if (i > 0) {
+              // Пауза между запросами (кроме первого)
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+            handleAIGenerateImage(newSubtasks[i]).catch((error) => {
+              console.error(`Failed to generate image for subtask ${newSubtasks[i].id}:`, error);
+            });
+          }
+        }, 0);
       }
     } catch (error) {
       console.error('Error during AI decomposition:', error);
@@ -588,11 +614,6 @@ function Settings() {
   const pollImageStatus = async (operationId: string): Promise<string> => {
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, 10000)); // 10 секунд
-
-      console.log('[IMG] Check status:', {
-        operationId,
-        timestamp: new Date().toISOString(),
-      });
 
       try {
         const checkResponse = await fetch('https://cloud.dab512.ru/tasker/api/generate_image', {
@@ -606,19 +627,7 @@ function Settings() {
 
         const checkData = await checkResponse.json();
 
-        console.log('[IMG] Status response:', {
-          operationId,
-          status: checkData.status,
-          timestamp: new Date().toISOString(),
-        });
-
         if (checkData.status === 'ready') {
-          const imagePreview = checkData.image ? checkData.image.substring(0, 100) + '...' : 'null';
-          console.log('[IMG] Image ready!', {
-            operationId,
-            imagePreview,
-            fullImageLength: checkData.image?.length || 0,
-          });
           return checkData.image;
         }
 
@@ -652,13 +661,6 @@ function Settings() {
         })),
       );
     }
-
-    console.log('[IMG] Start generation:', {
-      taskId: task.id,
-      taskTitle: task.name,
-      retryCount: retryCount + 1,
-      maxRetries: MAX_RETRIES,
-    });
 
     try {
       // Шаг 1: Запуск генерации
@@ -706,23 +708,8 @@ function Settings() {
       const imageDescription = startData.image_description;
       const operationId = startData.operation_id;
 
-      console.log('[IMG] Generation started:', {
-        operationId,
-        imageDescription: imageDescription ? imageDescription.slice(0, 50) + '...' : 'null',
-        status: startData.status,
-      });
-
       // Шаг 2: Polling статуса
       const image = await pollImageStatus(operationId);
-
-      console.log('[IMG] Generation completed successfully!', {
-        operationId,
-        taskId: task.id,
-        taskTitle: task.name,
-        imageDescription,
-        imageLength: image.length,
-        imagePreview: image.substring(0, 100) + '...',
-      });
 
       // Сохраняем изображение в IndexedDB
       const imageId = generateImageId();
