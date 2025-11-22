@@ -134,7 +134,7 @@ const TaskPlayScreen = ({
             >
               <img
                 src={imageUrl}
-                alt={task.name || ''}
+                alt={task.image.imageDescription || ''}
                 style={{
                   width: '100%',
                   height: '100%',

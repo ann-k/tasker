@@ -33,6 +33,7 @@ const ProcessTaskItem = ({
   image?: {
     imageId: string; // ID изображения в IndexedDB
     status: 'generating' | 'ready';
+    imageDescription?: string;
   };
   status: 'to-do' | 'doing' | 'done';
   subtasks?: Task[];
@@ -116,13 +117,12 @@ const ProcessTaskItem = ({
             >
               <img
                 src={imageUrl}
-                alt=""
+                alt={image.imageDescription || ''}
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
                 }}
-                aria-hidden="true"
               />
             </Box>
           </ListItemIcon>

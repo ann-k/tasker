@@ -698,6 +698,7 @@ function Settings() {
             image: {
               imageId,
               status: 'ready',
+              imageDescription,
             },
           })),
         );

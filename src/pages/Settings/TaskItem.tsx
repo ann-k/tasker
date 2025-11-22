@@ -29,6 +29,7 @@ export type Task = {
   image?: {
     imageId: string; // ID изображения в IndexedDB
     status: 'generating' | 'ready';
+    imageDescription?: string;
   };
   subtasks?: Task[];
 };
@@ -57,6 +58,7 @@ const TaskItem = ({
   image?: {
     imageId: string; // ID изображения в IndexedDB
     status: 'generating' | 'ready';
+    imageDescription?: string;
   };
   subtasks?: Task[];
   editingTaskId?: string | null;
@@ -183,13 +185,12 @@ const TaskItem = ({
               ) : imageUrl ? (
                 <img
                   src={imageUrl}
-                  alt=""
+                  alt={image.imageDescription || ''}
                   style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
                   }}
-                  aria-hidden="true"
                 />
               ) : null}
             </Box>
