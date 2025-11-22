@@ -124,21 +124,25 @@ const TaskPlayScreen = ({
           {task.image && task.image.status === 'ready' && imageUrl && (
             <Box
               sx={{
-                width: '100%',
-                maxWidth: 400,
-                height: 300,
+                width: 'fit-content',
+                maxWidth: '100%',
                 borderRadius: 2,
                 overflow: 'hidden',
                 boxShadow: 3,
+                display: 'flex',
+                alignItems: 'flex-start',
               }}
             >
               <img
                 src={imageUrl}
                 alt={task.image.imageDescription || ''}
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
+                  width: 'auto',
+                  height: 'auto',
+                  maxWidth: '800px',
+                  maxHeight: '600px',
+                  objectFit: 'contain',
+                  display: 'block',
                 }}
               />
             </Box>

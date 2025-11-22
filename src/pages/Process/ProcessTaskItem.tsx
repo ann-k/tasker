@@ -10,6 +10,7 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
+import { Stack } from '@mui/system';
 
 import { useImageUrl } from '@/hooks/useImageUrl';
 
@@ -61,99 +62,97 @@ const ProcessTaskItem = ({
           borderBottom: '1px solid',
           borderColor: 'divider',
           opacity: isCompleted ? 0.6 : 1,
+          flexDirection: 'column',
+          maxWidth: 500,
+          mx: 'auto',
+          width: '100%',
           '&:last-child': {
             borderBottom: 'none',
           },
         }}
-        secondaryAction={
-          isCompleted ? (
+      >
+        {image && image.status === 'ready' && imageUrl && (
+          <Box
+            sx={{
+              width: '100%',
+              maxHeight: 300,
+              mb: 1,
+              borderRadius: 1,
+              overflow: 'hidden',
+            }}
+          >
+            <img
+              src={imageUrl}
+              alt={image.imageDescription || ''}
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: '300px',
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
+        )}
+
+        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ width: '100%' }}>
+          {hasSubtasks && (
+            <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={handleChevronClick}
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? 'Свернуть подзадачи' : 'Раскрыть подзадачи'}
+                sx={{
+                  color: 'text.secondary',
+                  padding: 0.5,
+                  transition: 'transform 0.2s',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                }}
+              >
+                <ChevronRightIcon fontSize="small" />
+              </IconButton>
+            </ListItemIcon>
+          )}
+
+          <ListItemText
+            sx={{ flex: 1 }}
+            primary={
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: 400,
+                  color: 'text.primary',
+                  textDecoration: isCompleted ? 'line-through' : 'none',
+                }}
+              >
+                {name || 'Новая задача'}
+              </Typography>
+            }
+            secondary={
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  mt: 0.5,
+                  textDecoration: isCompleted ? 'line-through' : 'none',
+                }}
+              >
+                {formatDuration(displayDuration)}
+              </Typography>
+            }
+          />
+
+          {isCompleted && (
             <Box
               component="span"
               role="img"
               aria-label="Выполнено"
-              sx={{ display: 'flex', alignItems: 'center' }}
+              sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
             >
               <CheckCircleIcon aria-hidden="true" sx={{ color: 'success.main', fontSize: 24 }} />
             </Box>
-          ) : null
-        }
-      >
-        {hasSubtasks && (
-          <ListItemIcon sx={{ minWidth: 32, mr: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleChevronClick}
-              aria-expanded={isExpanded}
-              aria-label={isExpanded ? 'Свернуть подзадачи' : 'Раскрыть подзадачи'}
-              sx={{
-                color: 'text.secondary',
-                padding: 0.5,
-                transition: 'transform 0.2s',
-                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-              }}
-            >
-              <ChevronRightIcon fontSize="small" />
-            </IconButton>
-          </ListItemIcon>
-        )}
-
-        {image && image.status === 'ready' && imageUrl && (
-          <ListItemIcon
-            sx={{
-              minWidth: 120,
-              mr: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Box
-              sx={{
-                width: 120,
-                height: 70,
-                borderRadius: 1,
-                overflow: 'hidden',
-                flexShrink: 0,
-              }}
-            >
-              <img
-                src={imageUrl}
-                alt={image.imageDescription || ''}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
-            </Box>
-          </ListItemIcon>
-        )}
-
-        <ListItemText
-          primary={
-            <Typography
-              variant="body1"
-              sx={{
-                fontWeight: 400,
-                color: 'text.primary',
-                textDecoration: isCompleted ? 'line-through' : 'none',
-              }}
-            >
-              {name || 'Новая задача'}
-            </Typography>
-          }
-          secondary={
-            <Typography
-              variant="body2"
-              sx={{
-                color: 'text.secondary',
-                mt: 0.5,
-                textDecoration: isCompleted ? 'line-through' : 'none',
-              }}
-            >
-              {formatDuration(displayDuration)}
-            </Typography>
-          }
-        />
+          )}
+        </Stack>
       </ListItem>
 
       {hasSubtasks && (

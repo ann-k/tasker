@@ -110,14 +110,107 @@ const TaskItem = ({
           pl: level > 0 ? level * 2 + 1 + (hasSubtasks ? 0 : 5) : 1,
           borderBottom: '1px solid',
           borderColor: 'divider',
+          flexDirection: 'column',
+          maxWidth: 500,
+          mx: 'auto',
+          width: '100%',
           '&:last-child': {
             borderBottom: 'none',
           },
         }}
-        secondaryAction={
+      >
+        {image && (
+          <Box
+            sx={{
+              width: '100%',
+              maxHeight: 300,
+              mb: 1,
+              borderRadius: 1,
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: image.status === 'generating' ? 'action.hover' : 'transparent',
+            }}
+            role={image.status === 'generating' ? 'status' : undefined}
+            aria-busy={image.status === 'generating' ? true : undefined}
+          >
+            {image.status === 'generating' ? (
+              <CircularProgress size={24} aria-label="Генерируем картинку" />
+            ) : imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={image.imageDescription || ''}
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  maxHeight: '300px',
+                  objectFit: 'contain',
+                }}
+              />
+            ) : null}
+          </Box>
+        )}
+
+        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ width: '100%' }}>
+          {hasSubtasks && (
+            <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
+              <IconButton
+                size="small"
+                onClick={handleChevronClick}
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? 'Свернуть подзадачи' : 'Раскрыть подзадачи'}
+                sx={{
+                  color: 'text.secondary',
+                  padding: 0.5,
+                  transition: 'transform 0.2s',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                }}
+              >
+                <ChevronRightIcon fontSize="small" />
+              </IconButton>
+            </ListItemIcon>
+          )}
+
+          <ListItemText
+            sx={{ flex: 1 }}
+            primary={
+              <TextField
+                inputRef={inputRef}
+                value={displayName}
+                onChange={(e) => onNameChange(e.target.value)}
+                onFocus={() => onNameFocus(id)}
+                onBlur={() => onNameBlur(id)}
+                placeholder="Введите название задачи"
+                fullWidth
+                sx={{
+                  '& .MuiInputBase-root': {
+                    width: 'calc(100% - 64px - 20px)',
+                    fontSize: '1rem',
+                    fontWeight: 400,
+                    color: 'text.primary',
+                    '&:before, &:after': {
+                      borderBottom: 'none',
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    padding: '10px',
+                    '&::placeholder': {
+                      // opacity: 0.5,
+                    },
+                  },
+                }}
+              />
+            }
+            secondary={
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                {formatDuration(displayDuration)}
+              </Typography>
+            }
+          />
+
           <Stack direction="row" spacing={0.5} alignItems="center">
             <IconButton
-              edge="end"
               size="small"
               sx={{ color: 'text.secondary' }}
               onClick={handleAddSubtaskClick}
@@ -127,7 +220,6 @@ const TaskItem = ({
             </IconButton>
 
             <IconButton
-              edge="end"
               size="small"
               sx={{ color: 'text.secondary' }}
               onClick={(e) => onMenuOpen(e, id)}
@@ -136,102 +228,7 @@ const TaskItem = ({
               <MoreVertIcon fontSize="small" />
             </IconButton>
           </Stack>
-        }
-      >
-        {hasSubtasks && (
-          <ListItemIcon sx={{ minWidth: 32, mr: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleChevronClick}
-              aria-expanded={isExpanded}
-              aria-label={isExpanded ? 'Свернуть подзадачи' : 'Раскрыть подзадачи'}
-              sx={{
-                color: 'text.secondary',
-                padding: 0.5,
-                transition: 'transform 0.2s',
-                transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-              }}
-            >
-              <ChevronRightIcon fontSize="small" />
-            </IconButton>
-          </ListItemIcon>
-        )}
-        {image && (
-          <ListItemIcon
-            sx={{
-              minWidth: 120,
-              mr: 1.5,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Box
-              sx={{
-                width: 120,
-                height: 70,
-                borderRadius: 1,
-                overflow: 'hidden',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: image.status === 'generating' ? 'action.hover' : 'transparent',
-              }}
-              role={image.status === 'generating' ? 'status' : undefined}
-              aria-busy={image.status === 'generating' ? true : undefined}
-            >
-              {image.status === 'generating' ? (
-                <CircularProgress size={24} aria-label="Генерируем картинку" />
-              ) : imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={image.imageDescription || ''}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : null}
-            </Box>
-          </ListItemIcon>
-        )}
-
-        <ListItemText
-          primary={
-            <TextField
-              inputRef={inputRef}
-              value={displayName}
-              onChange={(e) => onNameChange(e.target.value)}
-              onFocus={() => onNameFocus(id)}
-              onBlur={() => onNameBlur(id)}
-              placeholder="Введите название задачи"
-              fullWidth
-              sx={{
-                '& .MuiInputBase-root': {
-                  width: 'calc(100% - 64px - 20px)',
-                  fontSize: '1rem',
-                  fontWeight: 400,
-                  color: 'text.primary',
-                  '&:before, &:after': {
-                    borderBottom: 'none',
-                  },
-                },
-                '& .MuiInputBase-input': {
-                  padding: '10px',
-                  '&::placeholder': {
-                    // opacity: 0.5,
-                  },
-                },
-              }}
-            />
-          }
-          secondary={
-            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              {formatDuration(displayDuration)}
-            </Typography>
-          }
-        />
+        </Stack>
       </ListItem>
 
       {hasSubtasks && (
