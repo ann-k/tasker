@@ -19,7 +19,7 @@ import { Stack } from '@mui/system';
 
 import { useImageUrl } from '@/hooks/useImageUrl';
 
-import { calculateSubtasksDuration, formatDuration } from './duration';
+import { formatDuration } from './duration';
 
 export type Task = {
   id: string;
@@ -79,7 +79,6 @@ const TaskItem = ({
   const isExpanded = expandedTasks.has(id);
   const editingTaskName = getEditingTaskName(id);
   const displayName = isEditing && editingTaskName !== null ? editingTaskName : name;
-  const displayDuration = hasSubtasks ? calculateSubtasksDuration(subtasks) : duration;
   const imageUrl = useImageUrl(image?.status === 'ready' ? image.imageId : undefined);
 
   useEffect(() => {
@@ -204,7 +203,7 @@ const TaskItem = ({
             }
             secondary={
               <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                {formatDuration(displayDuration)}
+                {hasSubtasks ? `${subtasks?.length || 0} подзадач` : formatDuration(duration)}
               </Typography>
             }
           />

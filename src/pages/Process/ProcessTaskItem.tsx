@@ -15,7 +15,7 @@ import { Stack } from '@mui/system';
 import { useImageUrl } from '@/hooks/useImageUrl';
 
 import { type Task } from '../Settings/TaskItem';
-import { calculateSubtasksDuration, formatDuration } from '../Settings/duration';
+import { countCompletedSubtasks, formatDuration } from '../Settings/duration';
 
 const ProcessTaskItem = ({
   id,
@@ -45,7 +45,10 @@ const ProcessTaskItem = ({
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isExpanded = expandedTasks.has(id);
   const isCompleted = status === 'done';
-  const displayDuration = hasSubtasks ? calculateSubtasksDuration(subtasks) : duration;
+  const completedSubtasksInfo = hasSubtasks ? countCompletedSubtasks(subtasks) : null;
+  const displayText = hasSubtasks
+    ? `${completedSubtasksInfo?.completed || 0} из ${completedSubtasksInfo?.total || 0} подзадач выполнено`
+    : formatDuration(duration);
   const imageUrl = useImageUrl(image?.status === 'ready' ? image.imageId : undefined);
 
   const handleChevronClick = () => {
@@ -137,7 +140,7 @@ const ProcessTaskItem = ({
                   textDecoration: isCompleted ? 'line-through' : 'none',
                 }}
               >
-                {formatDuration(displayDuration)}
+                {displayText}
               </Typography>
             }
           />

@@ -36,15 +36,28 @@ export const parseDuration = (label: string): number => {
   return option?.seconds || 60;
 };
 
-export const calculateSubtasksDuration = (subtasks?: Task[]): number => {
+export const countCompletedSubtasks = (subtasks?: Task[]): { completed: number; total: number } => {
   if (!subtasks || subtasks.length === 0) {
-    return 0;
+    return { completed: 0, total: 0 };
   }
-  return subtasks.reduce((total, task) => {
-    const taskDuration =
-      task.subtasks && task.subtasks.length > 0
-        ? calculateSubtasksDuration(task.subtasks)
-        : task.duration;
-    return total + taskDuration;
-  }, 0);
+
+  let completed = 0;
+  let total = 0;
+
+  const countRecursive = (tasks: Task[]) => {
+    for (const task of tasks) {
+      if (task.subtasks && task.subtasks.length > 0) {
+        countRecursive(task.subtasks);
+      } else {
+        total++;
+        if (task.status === 'done') {
+          completed++;
+        }
+      }
+    }
+  };
+
+  countRecursive(subtasks);
+
+  return { completed, total };
 };
