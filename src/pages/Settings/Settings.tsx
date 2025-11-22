@@ -804,15 +804,23 @@ function Settings() {
         </Typography>
 
         {tasks.length === 0 ? (
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ textAlign: 'center', mt: 4, maxWidth: 600, mx: 'auto' }}
-          >
-            Добавляйте задачи в расписание и декомпозируйте сложные задачи до посильных задач,
-            которые можно закончить не прерываясь. Мы рекомендуем ограничить длительность одной
-            минутой.
-          </Typography>
+          <>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ textAlign: 'center', mt: 4, maxWidth: 600, mx: 'auto' }}
+            >
+              Умное расписание помогает ребенку делать важные дела играючи
+            </Typography>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ textAlign: 'center', mt: 2, maxWidth: 600, mx: 'auto' }}
+            >
+              Добавляйте задачи в расписание и разбивайте сложные дела на простые задания, каждое из
+              которые можно выполнить за одну минуту
+            </Typography>
+          </>
         ) : (
           <List sx={{ flex: 1, overflow: 'auto', p: 0 }}>
             {tasks.map((task) => {
