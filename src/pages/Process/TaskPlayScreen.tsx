@@ -116,6 +116,7 @@ const TaskPlayScreen = ({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            maxHeight: '100vh',
             flex: 1,
             p: 4,
             gap: 3,
