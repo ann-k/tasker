@@ -13,26 +13,22 @@ import {
 
 import { DURATION_OPTIONS } from './duration';
 
-const CreateTaskDialog = ({
+const EditTaskDialog = ({
   open,
   onClose,
   onConfirm,
   selectedDuration,
   onDurationSelect,
-  mode,
 }: {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
   selectedDuration: string;
   onDurationSelect: (duration: string) => void;
-  mode: 'create' | 'edit';
 }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {mode === 'create' ? 'Создать новую задачу' : 'Поменять длительность'}
-      </DialogTitle>
+      <DialogTitle>Поменять длительность</DialogTitle>
       <DialogContent>
         <FormControl component="fieldset" fullWidth>
           <FormLabel component="legend" sx={{ mb: 2 }}>
@@ -53,11 +49,11 @@ const CreateTaskDialog = ({
       <DialogActions>
         <Button onClick={onClose}>Отмена</Button>
         <Button onClick={onConfirm} variant="contained" autoFocus>
-          {mode === 'create' ? 'Создать' : 'Сохранить'}
+          Сохранить
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default CreateTaskDialog;
+export default EditTaskDialog;

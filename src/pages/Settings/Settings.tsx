@@ -21,7 +21,7 @@ import {
 
 import { deleteImage, generateImageId, saveImage } from '@/utils/imageStorage';
 
-import CreateTaskDialog from './CreateTaskDialog';
+import EditTaskDialog from './EditTaskDialog';
 import TaskItem, { type Task } from './TaskItem';
 import { formatDuration, parseDuration } from './duration';
 
@@ -48,9 +48,8 @@ function Settings() {
     name: string;
   } | null>(null);
 
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState<string>('1 минута');
-  const [durationDialogMode, setDurationDialogMode] = useState<'create' | 'edit'>('create');
   const [editingDurationTaskId, setEditingDurationTaskId] = useState<string | null>(null);
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
 
@@ -140,8 +139,8 @@ function Settings() {
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
 
-  const handleCreateDialogClose = () => {
-    setIsCreateDialogOpen(false);
+  const handleEditDialogClose = () => {
+    setIsEditDialogOpen(false);
     setSelectedDuration('1 минута');
     setEditingDurationTaskId(null);
     setParentTaskId(null);
@@ -151,9 +150,9 @@ function Settings() {
     setSelectedDuration(duration);
   };
 
-  const handleCreateDialogConfirm = () => {
+  const handleEditDialogConfirm = () => {
     const durationSeconds = parseDuration(selectedDuration);
-    if (durationDialogMode === 'edit' && editingDurationTaskId) {
+    if (editingDurationTaskId) {
       // Обновляем длительность существующей задачи
       setTasks((prevTasks) =>
         updateTaskInTree(prevTasks, editingDurationTaskId, (task) => ({
@@ -192,7 +191,7 @@ function Settings() {
       };
       setTasks((prevTasks) => [...prevTasks, newTask]);
     }
-    setIsCreateDialogOpen(false);
+    setIsEditDialogOpen(false);
     setSelectedDuration('1 минута');
     setEditingDurationTaskId(null);
     setParentTaskId(null);
@@ -201,9 +200,8 @@ function Settings() {
   const handleSetDuration = (task: Task) => {
     if (task) {
       setSelectedDuration(formatDuration(task.duration));
-      setDurationDialogMode('edit');
       setEditingDurationTaskId(task.id);
-      setIsCreateDialogOpen(true);
+      setIsEditDialogOpen(true);
     }
     handleMenuClose();
   };
@@ -941,13 +939,12 @@ function Settings() {
           Добавить задачу
         </Button>
 
-        <CreateTaskDialog
-          open={isCreateDialogOpen}
-          onClose={handleCreateDialogClose}
-          onConfirm={handleCreateDialogConfirm}
+        <EditTaskDialog
+          open={isEditDialogOpen}
+          onClose={handleEditDialogClose}
+          onConfirm={handleEditDialogConfirm}
           selectedDuration={selectedDuration}
           onDurationSelect={handleDurationSelect}
-          mode={durationDialogMode}
         />
       </Box>
     </>
