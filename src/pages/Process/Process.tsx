@@ -297,16 +297,68 @@ function Process() {
   const moveToNextTask = useCallback(
     (updatedTasks: Task[]) => {
       // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
-      leafTasksQueueRef.current = leafTasksQueueRef.current.map((task) => {
-        const taskFromTree = findTaskInTree(updatedTasks, task.id);
-        return taskFromTree || task;
-      });
+      // И фильтруем выполненные задачи
+      const updatedQueue = leafTasksQueueRef.current
+        .map((task) => {
+          const taskFromTree = findTaskInTree(updatedTasks, task.id);
+          return taskFromTree || task;
+        })
+        .filter((t) => t.status !== 'done');
+
+      // Если очередь стала пустой или текущая задача не найдена, пересобираем очередь
+      // Это важно для верхнеуровневых задач без детей
+      if (
+        updatedQueue.length === 0 ||
+        (selectedTask && !updatedQueue.find((t) => t.id === selectedTask.id))
+      ) {
+        if (currentTopLevelTaskRef.current) {
+          // Пересобираем очередь из текущей верхнеуровневой задачи и её сиблингов
+          const siblings = findSiblings(updatedTasks, currentTopLevelTaskRef.current.id);
+          const currentIndex = siblings.findIndex(
+            (t) => t.id === currentTopLevelTaskRef.current?.id,
+          );
+
+          if (currentIndex !== -1) {
+            // Если текущая верхнеуровневая задача выполнена, начинаем со следующей
+            const startIndex =
+              siblings[currentIndex].status === 'done' ? currentIndex + 1 : currentIndex;
+            if (startIndex < siblings.length) {
+              const remainingSiblings = siblings.slice(startIndex);
+              const allLeafTasks: Task[] = [];
+              for (const sibling of remainingSiblings) {
+                allLeafTasks.push(...collectAllLeafTasks(sibling));
+              }
+              const filteredTasks = allLeafTasks.filter((t) => t.status !== 'done');
+              if (filteredTasks.length > 0) {
+                leafTasksQueueRef.current = filteredTasks;
+                // Обновляем currentTopLevelTaskRef на первую невыполненную задачу
+                currentTopLevelTaskRef.current = remainingSiblings[0];
+              } else {
+                leafTasksQueueRef.current = updatedQueue;
+              }
+            } else {
+              leafTasksQueueRef.current = updatedQueue;
+            }
+          } else {
+            leafTasksQueueRef.current = updatedQueue;
+          }
+        } else {
+          leafTasksQueueRef.current = updatedQueue;
+        }
+      } else {
+        leafTasksQueueRef.current = updatedQueue;
+      }
 
       // Синхронизируем индекс с текущей задачей перед переходом к следующей
       if (selectedTask) {
         const actualIndex = leafTasksQueueRef.current.findIndex((t) => t.id === selectedTask.id);
         if (actualIndex !== -1) {
           currentTaskIndexRef.current = actualIndex;
+        } else {
+          // Если текущая задача не найдена в очереди (была выполнена и удалена),
+          // следующая задача должна быть с индексом 0 (первая в очереди)
+          // Устанавливаем индекс на -1, чтобы nextIndex стал 0
+          currentTaskIndexRef.current = -1;
         }
       }
 
@@ -415,16 +467,32 @@ function Process() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
       // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
-      leafTasksQueueRef.current = leafTasksQueueRef.current.map((t) => {
-        const taskFromTree = findTaskInTree(updated, t.id);
-        return taskFromTree || t;
-      });
+      // И фильтруем выполненные задачи
+      leafTasksQueueRef.current = leafTasksQueueRef.current
+        .map((t) => {
+          const taskFromTree = findTaskInTree(updated, t.id);
+          return taskFromTree || t;
+        })
+        .filter((t) => t.status !== 'done');
 
       // Обновляем selectedTask, если это та же задача
       if (selectedTask && selectedTask.id === taskId) {
         const updatedTask = findTaskInTree(updated, taskId);
         if (updatedTask) {
           setSelectedTask(updatedTask);
+        }
+      }
+
+      // Синхронизируем индекс после фильтрации выполненных задач
+      if (selectedTask) {
+        const actualIndex = leafTasksQueueRef.current.findIndex((t) => t.id === selectedTask.id);
+        if (actualIndex !== -1) {
+          currentTaskIndexRef.current = actualIndex;
+        } else {
+          // Если текущая задача не найдена в очереди (была выполнена и удалена),
+          // следующая задача должна быть с индексом 0 (первая в очереди)
+          // Устанавливаем индекс на -1, чтобы nextIndex стал 0
+          currentTaskIndexRef.current = -1;
         }
       }
 
@@ -501,10 +569,13 @@ function Process() {
       }
 
       // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
-      leafTasksQueueRef.current = leafTasksQueueRef.current.map((task) => {
-        const taskFromTree = findTaskInTree(prevTasks, task.id);
-        return taskFromTree || task;
-      });
+      // И фильтруем выполненные задачи
+      leafTasksQueueRef.current = leafTasksQueueRef.current
+        .map((task) => {
+          const taskFromTree = findTaskInTree(prevTasks, task.id);
+          return taskFromTree || task;
+        })
+        .filter((t) => t.status !== 'done');
 
       // Всегда находим индекс текущей задачи по её ID в очереди
       const currentTaskIndex = leafTasksQueueRef.current.findIndex((t) => t.id === selectedTask.id);
