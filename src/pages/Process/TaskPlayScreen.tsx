@@ -11,7 +11,7 @@ import { Box, Dialog, IconButton, Typography } from '@mui/material';
 import { useImageUrl } from '@/hooks/useImageUrl';
 
 import { type Task } from '../Settings/TaskItem';
-import { formatDurationWithSeconds } from '../Settings/duration';
+import { formatDurationReadable, formatDurationWithSeconds } from '../Settings/duration';
 
 const TaskPlayScreen = ({
   task,
@@ -36,6 +36,7 @@ const TaskPlayScreen = ({
   const [passedSeconds, setPassedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const completedTimeRef = useRef<number | null>(null);
   const imageUrl = useImageUrl(task?.image?.status === 'ready' ? task.image.imageId : undefined);
 
   useEffect(() => {
@@ -63,6 +64,7 @@ const TaskPlayScreen = ({
       if (isNewTask) {
         setPassedSeconds(0);
         setIsPaused(false);
+        completedTimeRef.current = null;
         prevTaskIdRef.current = task.id;
       }
     }
@@ -163,42 +165,73 @@ const TaskPlayScreen = ({
             </Box>
           )}
 
-          <Typography
-            id="task-play-title"
-            variant="h4"
-            component="h1"
+          <Box
             sx={{
-              fontWeight: 500,
-              textAlign: 'center',
-              color: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
             }}
           >
-            {task.name}
-          </Typography>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+            {task.status === 'done' && (
+              <CheckIcon
+                aria-label="Выполнено"
+                sx={{
+                  fontSize: 32,
+                  color: 'success.main',
+                }}
+              />
+            )}
             <Typography
-              variant="h6"
-              component="p"
+              id="task-play-title"
+              variant="h4"
+              component="h1"
               sx={{
-                color: 'text.secondary',
+                fontWeight: 500,
                 textAlign: 'center',
+                color: 'text.primary',
               }}
             >
-              Прошло: {formatDurationWithSeconds(passedSeconds)}
-            </Typography>
-
-            <Typography
-              variant="h6"
-              component="p"
-              sx={{
-                color: 'text.secondary',
-                textAlign: 'center',
-              }}
-            >
-              Осталось: {formatDurationWithSeconds(remainingSeconds)}
+              {task.name}
             </Typography>
           </Box>
+
+          {task.status === 'done' ? (
+            <Typography
+              variant="h6"
+              component="p"
+              sx={{
+                color: 'text.secondary',
+                textAlign: 'center',
+              }}
+            >
+              Выполнено за {formatDurationReadable(completedTimeRef.current || passedSeconds)}
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+              <Typography
+                variant="h6"
+                component="p"
+                sx={{
+                  color: 'text.secondary',
+                  textAlign: 'center',
+                }}
+              >
+                Прошло: {formatDurationWithSeconds(passedSeconds)}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                component="p"
+                sx={{
+                  color: 'text.secondary',
+                  textAlign: 'center',
+                }}
+              >
+                Осталось: {formatDurationWithSeconds(remainingSeconds)}
+              </Typography>
+            </Box>
+          )}
 
           <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', mt: 2, minHeight: 120 }}>
             {canGoBack && (
@@ -258,6 +291,7 @@ const TaskPlayScreen = ({
             {task.status !== 'done' && (
               <IconButton
                 onClick={() => {
+                  completedTimeRef.current = passedSeconds;
                   onMarkComplete(task.id, passedSeconds);
                 }}
                 aria-label="Завершить задачу"

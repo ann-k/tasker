@@ -31,6 +31,31 @@ export const formatDurationWithSeconds = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 };
 
+export const formatDurationReadable = (seconds: number): string => {
+  if (typeof Intl === 'undefined' || !('DurationFormat' in Intl)) {
+    return '';
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const DurationFormat = (Intl as any).DurationFormat;
+    const formatter = new DurationFormat('ru', {
+      style: 'long',
+    });
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return formatter.format({
+      hours,
+      minutes,
+      seconds: secs,
+    });
+  } catch {
+    return '';
+  }
+};
+
 export const parseDuration = (label: string): number => {
   const option = DURATION_OPTIONS.find((opt) => opt.label === label);
   return option?.seconds || 60;
