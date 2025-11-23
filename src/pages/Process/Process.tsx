@@ -784,7 +784,14 @@ function Process() {
         onMarkComplete={markTaskAsDone}
         onMoveToNext={handleMoveToNext}
         onMoveToPrevious={handleMoveToPrevious}
-        canGoBack={canMoveToPrevious()}
+        canGoBack={
+          (selectedTask?.status !== 'done' ||
+            (selectedTask?.status === 'done' &&
+              fireworksCompleted &&
+              newAchievements.length === 0 &&
+              pendingAchievements.length === 0)) &&
+          canMoveToPrevious()
+        }
         onFireworksComplete={() => {
           setFireworksCompleted(true);
           // Показываем достижения после завершения фейерверков
