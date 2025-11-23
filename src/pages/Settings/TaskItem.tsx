@@ -109,49 +109,14 @@ const TaskItem = ({
           pl: level > 0 ? level * 2 + 1 + (hasSubtasks ? 0 : 5) : 1,
           borderBottom: '1px solid',
           borderColor: 'divider',
-          flexDirection: 'column',
-          maxWidth: 500,
-          mx: 'auto',
+          flexDirection: 'row',
           width: '100%',
           '&:last-child': {
             borderBottom: 'none',
           },
         }}
       >
-        {image && (
-          <Box
-            sx={{
-              width: '100%',
-              maxHeight: 300,
-              mb: 1,
-              borderRadius: 1,
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: image.status === 'generating' ? 'action.hover' : 'transparent',
-            }}
-            role={image.status === 'generating' ? 'status' : undefined}
-            aria-busy={image.status === 'generating' ? true : undefined}
-          >
-            {image.status === 'generating' ? (
-              <CircularProgress size={24} aria-label="Генерируем картинку" />
-            ) : imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={image.imageDescription || ''}
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: '300px',
-                  objectFit: 'contain',
-                }}
-              />
-            ) : null}
-          </Box>
-        )}
-
-        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ width: '100%' }}>
+        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ flex: 1, minWidth: 0 }}>
           {hasSubtasks && (
             <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
               <IconButton
@@ -184,7 +149,7 @@ const TaskItem = ({
                 fullWidth
                 sx={{
                   '& .MuiInputBase-root': {
-                    width: 'calc(100% - 64px - 20px)',
+                    width: '100%',
                     fontSize: '1rem',
                     fontWeight: 400,
                     color: 'text.primary',
@@ -207,26 +172,59 @@ const TaskItem = ({
               </Typography>
             }
           />
+        </Stack>
 
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <IconButton
-              size="small"
-              sx={{ color: 'text.secondary' }}
-              onClick={handleAddSubtaskClick}
-              aria-label="Добавить подзадачу"
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>
+        {image && (
+          <Box
+            sx={{
+              width: 100,
+              height: 60,
+              ml: 2,
+              flexShrink: 0,
+              borderRadius: 1,
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: image.status === 'generating' ? 'action.hover' : 'transparent',
+            }}
+            role={image.status === 'generating' ? 'status' : undefined}
+            aria-busy={image.status === 'generating' ? true : undefined}
+          >
+            {image.status === 'generating' ? (
+              <CircularProgress size={24} aria-label="Генерируем картинку" />
+            ) : imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={image.imageDescription || ''}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : null}
+          </Box>
+        )}
 
-            <IconButton
-              size="small"
-              sx={{ color: 'text.secondary' }}
-              onClick={(e) => onMenuOpen(e, id)}
-              aria-label="Ещё"
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
-          </Stack>
+        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ ml: image ? 1 : 0 }}>
+          <IconButton
+            size="small"
+            sx={{ color: 'text.secondary' }}
+            onClick={handleAddSubtaskClick}
+            aria-label="Добавить подзадачу"
+          >
+            <AddIcon fontSize="small" />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            sx={{ color: 'text.secondary' }}
+            onClick={(e) => onMenuOpen(e, id)}
+            aria-label="Ещё"
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
         </Stack>
       </ListItem>
 

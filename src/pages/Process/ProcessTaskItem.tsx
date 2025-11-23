@@ -71,39 +71,14 @@ const ProcessTaskItem = ({
           borderBottom: '1px solid',
           borderColor: 'divider',
           opacity: isCompleted ? 0.6 : 1,
-          flexDirection: 'column',
-          maxWidth: 500,
-          mx: 'auto',
+          flexDirection: 'row',
           width: '100%',
           '&:last-child': {
             borderBottom: 'none',
           },
         }}
       >
-        {image && image.status === 'ready' && imageUrl && (
-          <Box
-            sx={{
-              width: '100%',
-              maxHeight: 300,
-              mb: 1,
-              borderRadius: 1,
-              overflow: 'hidden',
-            }}
-          >
-            <img
-              src={imageUrl}
-              alt={image.imageDescription || ''}
-              style={{
-                width: '100%',
-                height: 'auto',
-                maxHeight: '300px',
-                objectFit: 'contain',
-              }}
-            />
-          </Box>
-        )}
-
-        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ width: '100%' }}>
+        <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ flex: 1, minWidth: 0 }}>
           {hasSubtasks && (
             <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
               <IconButton
@@ -150,30 +125,58 @@ const ProcessTaskItem = ({
               </Typography>
             }
           />
+        </Stack>
 
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            {showPlayButton && (
-              <IconButton
-                size="small"
-                sx={{ color: 'primary.main' }}
-                onClick={() => onPlayClick?.(id)}
-                aria-label="Запустить выполнение"
-              >
-                <PlayArrowIcon fontSize="small" />
-              </IconButton>
-            )}
+        {image && image.status === 'ready' && imageUrl && (
+          <Box
+            sx={{
+              width: 100,
+              height: 60,
+              ml: 2,
+              flexShrink: 0,
+              borderRadius: 1,
+              overflow: 'hidden',
+            }}
+          >
+            <img
+              src={imageUrl}
+              alt={image.imageDescription || ''}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          </Box>
+        )}
 
-            {isCompleted && (
-              <Box
-                component="span"
-                role="img"
-                aria-label="Выполнено"
-                sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
-              >
-                <CheckCircleIcon aria-hidden="true" sx={{ color: 'success.main', fontSize: 24 }} />
-              </Box>
-            )}
-          </Stack>
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          sx={{ ml: image && image.status === 'ready' && imageUrl ? 1 : 0 }}
+        >
+          {showPlayButton && (
+            <IconButton
+              size="small"
+              sx={{ color: 'primary.main' }}
+              onClick={() => onPlayClick?.(id)}
+              aria-label="Запустить выполнение"
+            >
+              <PlayArrowIcon fontSize="small" />
+            </IconButton>
+          )}
+
+          {isCompleted && (
+            <Box
+              component="span"
+              role="img"
+              aria-label="Выполнено"
+              sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
+            >
+              <CheckCircleIcon aria-hidden="true" sx={{ color: 'success.main', fontSize: 24 }} />
+            </Box>
+          )}
         </Stack>
       </ListItem>
 
