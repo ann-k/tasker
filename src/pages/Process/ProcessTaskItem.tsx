@@ -1,5 +1,6 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
   Box,
   Collapse,
@@ -26,6 +27,7 @@ const ProcessTaskItem = ({
   subtasks,
   expandedTasks,
   onToggleExpand,
+  onPlayClick,
   level = 0,
 }: {
   id: string;
@@ -40,11 +42,15 @@ const ProcessTaskItem = ({
   subtasks?: Task[];
   expandedTasks: Set<string>;
   onToggleExpand: (taskId: string) => void;
+  onPlayClick?: (taskId: string) => void;
   level?: number;
 }) => {
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isExpanded = expandedTasks.has(id);
   const isCompleted = status === 'done';
+  const isLeafTask = !hasSubtasks;
+  const isIncomplete = status !== 'done';
+  const showPlayButton = isLeafTask && isIncomplete && onPlayClick !== undefined;
   const completedSubtasksInfo = hasSubtasks ? countCompletedSubtasks(subtasks) : null;
   const displayText = hasSubtasks
     ? `${completedSubtasksInfo?.completed || 0} из ${completedSubtasksInfo?.total || 0} подзадач выполнено`
@@ -145,16 +151,29 @@ const ProcessTaskItem = ({
             }
           />
 
-          {isCompleted && (
-            <Box
-              component="span"
-              role="img"
-              aria-label="Выполнено"
-              sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
-            >
-              <CheckCircleIcon aria-hidden="true" sx={{ color: 'success.main', fontSize: 24 }} />
-            </Box>
-          )}
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            {showPlayButton && (
+              <IconButton
+                size="small"
+                sx={{ color: 'primary.main' }}
+                onClick={() => onPlayClick?.(id)}
+                aria-label="Запустить выполнение"
+              >
+                <PlayArrowIcon fontSize="small" />
+              </IconButton>
+            )}
+
+            {isCompleted && (
+              <Box
+                component="span"
+                role="img"
+                aria-label="Выполнено"
+                sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
+              >
+                <CheckCircleIcon aria-hidden="true" sx={{ color: 'success.main', fontSize: 24 }} />
+              </Box>
+            )}
+          </Stack>
         </Stack>
       </ListItem>
 
@@ -172,6 +191,7 @@ const ProcessTaskItem = ({
                 subtasks={subtask.subtasks}
                 expandedTasks={expandedTasks}
                 onToggleExpand={onToggleExpand}
+                onPlayClick={onPlayClick}
                 level={level + 1}
               />
             ))}

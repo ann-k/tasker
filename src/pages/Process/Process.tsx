@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { Box, Button, Link, List, Typography } from '@mui/material';
@@ -12,6 +12,7 @@ const STORAGE_KEY = 'tasker-tasks';
 
 function Process() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem(STORAGE_KEY);
     return savedTasks ? JSON.parse(savedTasks) : [];
@@ -49,6 +50,78 @@ function Process() {
       });
     } else {
       setSelectedTask(task);
+    }
+  };
+
+  const findSiblings = useCallback((tasksList: Task[], taskId: string): Task[] => {
+    // Ищем задачу на верхнем уровне
+    const topLevelIndex = tasksList.findIndex((t) => t.id === taskId);
+    if (topLevelIndex !== -1) {
+      return tasksList;
+    }
+
+    // Ищем в подзадачах
+    for (const t of tasksList) {
+      if (t.subtasks && t.subtasks.length > 0) {
+        const subtaskIndex = t.subtasks.findIndex((subtask) => subtask.id === taskId);
+        if (subtaskIndex !== -1) {
+          return t.subtasks;
+        }
+        const found = findSiblings(t.subtasks, taskId);
+        if (found.length > 0) {
+          return found;
+        }
+      }
+    }
+    return [];
+  }, []);
+
+  const handlePlayClick = (task: Task) => {
+    // Find the parent task
+    const parent = findParentTask(tasks, task.id);
+
+    if (parent) {
+      // If task has a parent, collect all leaf tasks from parent
+      const allLeafTasks = collectAllLeafTasks(parent);
+      const incompleteLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
+
+      // Find the index of the selected task in the queue
+      const taskIndex = incompleteLeafTasks.findIndex((t) => t.id === task.id);
+      if (taskIndex !== -1) {
+        // Start from the selected task and continue with remaining tasks
+        const remainingTasks = incompleteLeafTasks.slice(taskIndex);
+        leafTasksQueueRef.current = remainingTasks;
+        currentTopLevelTaskRef.current = parent;
+        currentTaskIndexRef.current = 0;
+        handleTaskSelect(remainingTasks[0]);
+      }
+    } else {
+      // If task is top-level, collect all leaf tasks from it and its siblings
+      const siblings = findSiblings(tasks, task.id);
+      const taskIndex = siblings.findIndex((t) => t.id === task.id);
+
+      if (taskIndex !== -1) {
+        // Collect leaf tasks from this task and all remaining siblings
+        const remainingSiblings = siblings.slice(taskIndex);
+        const allLeafTasks: Task[] = [];
+
+        for (const sibling of remainingSiblings) {
+          allLeafTasks.push(...collectAllLeafTasks(sibling));
+        }
+
+        const incompleteLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
+        const selectedTaskIndex = incompleteLeafTasks.findIndex((t) => t.id === task.id);
+
+        if (selectedTaskIndex !== -1) {
+          // Start from the selected task and continue with remaining tasks
+          const remainingTasks = incompleteLeafTasks.slice(selectedTaskIndex);
+          leafTasksQueueRef.current = remainingTasks;
+          // Store the first sibling as the top-level task reference
+          currentTopLevelTaskRef.current = remainingSiblings[0];
+          currentTaskIndexRef.current = 0;
+          handleTaskSelect(remainingTasks[0]);
+        }
+      }
     }
   };
 
@@ -169,25 +242,6 @@ function Process() {
     return findFirstIncompleteTask(tasksList) !== null;
   };
 
-  const collectLeafTasks = useCallback((task: Task): Task[] => {
-    const leafTasks: Task[] = [];
-
-    // Если у задачи нет подзадач или они пустые - это листовая задача
-    if (!task.subtasks || task.subtasks.length === 0) {
-      // Добавляем только если она не выполнена
-      if (task.status !== 'done') {
-        leafTasks.push(task);
-      }
-    } else {
-      // Если есть подзадачи, рекурсивно обходим каждую
-      for (const subtask of task.subtasks) {
-        leafTasks.push(...collectLeafTasks(subtask));
-      }
-    }
-
-    return leafTasks;
-  }, []);
-
   const collectAllLeafTasks = useCallback((task: Task): Task[] => {
     const leafTasks: Task[] = [];
 
@@ -204,6 +258,16 @@ function Process() {
 
     return leafTasks;
   }, []);
+
+  const collectLeafTasks = useCallback(
+    (task: Task): Task[] => {
+      // Сначала собираем все листовые задачи в правильном порядке (включая выполненные)
+      const allLeafTasks = collectAllLeafTasks(task);
+      // Затем фильтруем только невыполненные, сохраняя порядок
+      return allLeafTasks.filter((t) => t.status !== 'done');
+    },
+    [collectAllLeafTasks],
+  );
 
   const moveToNextTask = useCallback(
     (updatedTasks: Task[]) => {
@@ -231,11 +295,46 @@ function Process() {
         return;
       }
 
-      // Очередь закончилась, ищем следующую верхнюю задачу
-      const nextTopLevelTask = findFirstIncompleteTask(updatedTasks);
+      // Очередь закончилась, ищем сиблингов текущей задачи
+      if (currentTopLevelTaskRef.current) {
+        // Find siblings of the current top-level task
+        const siblings = findSiblings(updatedTasks, currentTopLevelTaskRef.current.id);
+        const currentIndex = siblings.findIndex((t) => t.id === currentTopLevelTaskRef.current?.id);
+
+        if (currentIndex !== -1 && currentIndex < siblings.length - 1) {
+          // There are siblings after the current task
+          const remainingSiblings = siblings.slice(currentIndex + 1);
+
+          // Collect leaf tasks from remaining siblings
+          const allLeafTasks: Task[] = [];
+          for (const sibling of remainingSiblings) {
+            allLeafTasks.push(...collectAllLeafTasks(sibling));
+          }
+
+          const incompleteLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
+
+          if (incompleteLeafTasks.length > 0) {
+            leafTasksQueueRef.current = incompleteLeafTasks;
+            // Update currentTopLevelTaskRef to the first remaining sibling
+            currentTopLevelTaskRef.current = remainingSiblings[0];
+            currentTaskIndexRef.current = 0;
+            setSelectedTask(incompleteLeafTasks[0]);
+            return;
+          }
+        }
+      }
+
+      // No more siblings, find next top-level task
+      const currentTopLevelIndex = currentTopLevelTaskRef.current
+        ? updatedTasks.findIndex((t) => t.id === currentTopLevelTaskRef.current?.id)
+        : -1;
+      const remainingTasks =
+        currentTopLevelIndex >= 0 ? updatedTasks.slice(currentTopLevelIndex + 1) : updatedTasks;
+      const nextTopLevelTask = findFirstIncompleteTask(remainingTasks);
 
       if (nextTopLevelTask) {
-        const newLeafTasks = collectLeafTasks(nextTopLevelTask);
+        const allLeafTasks = collectAllLeafTasks(nextTopLevelTask);
+        const newLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
 
         if (newLeafTasks.length > 0) {
           // Есть невыполненные листовые задачи
@@ -244,25 +343,6 @@ function Process() {
           currentTaskIndexRef.current = 0;
           setSelectedTask(newLeafTasks[0]);
           return;
-        } else {
-          // Все листовые задачи выполнены, ищем следующую верхнюю задачу
-          // Продолжаем поиск с следующей задачи после текущей
-          const currentIndex = updatedTasks.findIndex(
-            (t) => t.id === currentTopLevelTaskRef.current?.id,
-          );
-          const remainingTasks = updatedTasks.slice(currentIndex + 1);
-          const nextTask = findFirstIncompleteTask(remainingTasks);
-
-          if (nextTask) {
-            const newLeafTasks = collectLeafTasks(nextTask);
-            if (newLeafTasks.length > 0) {
-              leafTasksQueueRef.current = newLeafTasks;
-              currentTopLevelTaskRef.current = nextTask;
-              currentTaskIndexRef.current = 0;
-              setSelectedTask(newLeafTasks[0]);
-              return;
-            }
-          }
         }
       }
 
@@ -272,7 +352,7 @@ function Process() {
       currentTaskIndexRef.current = 0;
       currentTopLevelTaskRef.current = null;
     },
-    [findFirstIncompleteTask, collectLeafTasks, selectedTask, findTaskInTree],
+    [findFirstIncompleteTask, collectAllLeafTasks, findSiblings, selectedTask, findTaskInTree],
   );
 
   const markTaskAsDone = (taskId: string) => {
@@ -316,12 +396,10 @@ function Process() {
   };
 
   const handleMoveToNext = () => {
-    setTasks((prevTasks) => {
-      // Переходим к следующей задаче
-      setTimeout(() => {
-        moveToNextTask(prevTasks);
-      }, 0);
-      return prevTasks;
+    // Get current tasks and call moveToNextTask
+    setTasks((currentTasks) => {
+      moveToNextTask(currentTasks);
+      return currentTasks;
     });
   };
 
@@ -493,6 +571,40 @@ function Process() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Выполняем только при монтировании компонента для проверки существующих задач
 
+  // Handle taskId from URL
+  useEffect(() => {
+    const taskId = searchParams.get('taskId');
+    if (taskId && tasks.length > 0) {
+      const task = findTaskInTree(tasks, taskId);
+      if (task) {
+        // Find the top-level parent task
+        let topLevelTask = task;
+        let parent = findParentTask(tasks, taskId);
+        while (parent) {
+          topLevelTask = parent;
+          parent = findParentTask(tasks, parent.id);
+        }
+
+        // Collect all leaf tasks from the top-level task
+        const leafTasks = collectLeafTasks(topLevelTask);
+
+        if (leafTasks.length > 0) {
+          // Find the index of the selected task in the queue
+          const taskIndex = leafTasks.findIndex((t) => t.id === taskId);
+          if (taskIndex !== -1) {
+            leafTasksQueueRef.current = leafTasks;
+            currentTopLevelTaskRef.current = topLevelTask;
+            currentTaskIndexRef.current = taskIndex;
+            handleTaskSelect(leafTasks[taskIndex]);
+            // Clear the URL parameter
+            setSearchParams({});
+          }
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, tasks]);
+
   const handleStartFirstTask = () => {
     const firstIncompleteTask = findFirstIncompleteTask(tasks);
     if (firstIncompleteTask) {
@@ -583,6 +695,7 @@ function Process() {
                   subtasks={task.subtasks}
                   expandedTasks={expandedTasks}
                   onToggleExpand={handleToggleExpand}
+                  onPlayClick={() => handlePlayClick(task)}
                 />
               ))}
             </List>
