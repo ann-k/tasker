@@ -28,6 +28,7 @@ const ProcessTaskItem = ({
   expandedTasks,
   onToggleExpand,
   onPlayClick,
+  onMarkIncomplete,
   level = 0,
 }: {
   id: string;
@@ -43,6 +44,7 @@ const ProcessTaskItem = ({
   expandedTasks: Set<string>;
   onToggleExpand: (taskId: string) => void;
   onPlayClick?: (taskId: string) => void;
+  onMarkIncomplete?: (taskId: string) => void;
   level?: number;
 }) => {
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
@@ -168,14 +170,20 @@ const ProcessTaskItem = ({
           )}
 
           {isCompleted && (
-            <Box
-              component="span"
-              role="img"
-              aria-label="Выполнено"
-              sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
+            <IconButton
+              size="small"
+              onClick={() => onMarkIncomplete?.(id)}
+              aria-label="Выполнено. Отметить как невыполненное"
+              sx={{
+                color: 'success.main',
+                mt: 0.5,
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+              }}
             >
-              <CheckCircleIcon aria-hidden="true" sx={{ color: 'success.main', fontSize: 24 }} />
-            </Box>
+              <CheckCircleIcon fontSize="small" />
+            </IconButton>
           )}
         </Stack>
       </ListItem>
@@ -195,6 +203,7 @@ const ProcessTaskItem = ({
                 expandedTasks={expandedTasks}
                 onToggleExpand={onToggleExpand}
                 onPlayClick={onPlayClick}
+                onMarkIncomplete={onMarkIncomplete}
                 level={level + 1}
               />
             ))}

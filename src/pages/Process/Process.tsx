@@ -557,6 +557,14 @@ function Process() {
     });
   };
 
+  const handleMarkIncomplete = (taskId: string) => {
+    setTasks((prevTasks) => {
+      const updated = resetTaskAndParentsStatus(prevTasks, taskId);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const canMoveToPrevious = useCallback((): boolean => {
     // Если есть предыдущая задача в текущей очереди
     if (currentTaskIndexRef.current > 0) {
@@ -853,6 +861,7 @@ function Process() {
                   expandedTasks={expandedTasks}
                   onToggleExpand={handleToggleExpand}
                   onPlayClick={() => handlePlayClick(task)}
+                  onMarkIncomplete={handleMarkIncomplete}
                 />
               ))}
             </List>
