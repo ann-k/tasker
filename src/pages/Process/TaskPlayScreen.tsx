@@ -22,14 +22,18 @@ const TaskPlayScreen = ({
   onMoveToNext,
   onMoveToPrevious,
   canGoBack,
+  onFireworksComplete,
+  showNextButton = true,
 }: {
   task: Task | null;
   open: boolean;
   onClose: () => void;
-  onMarkComplete: (taskId: string) => void;
+  onMarkComplete: (taskId: string, actualTime: number) => void;
   onMoveToNext: () => void;
   onMoveToPrevious: () => void;
   canGoBack: boolean;
+  onFireworksComplete?: () => void;
+  showNextButton?: boolean;
 }) => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [passedSeconds, setPassedSeconds] = useState(0);
@@ -96,7 +100,13 @@ const TaskPlayScreen = ({
           overflow: 'hidden',
         }}
       >
-        <Fireworks active={showFireworks} onComplete={() => setShowFireworks(false)} />
+        <Fireworks
+          active={showFireworks}
+          onComplete={() => {
+            setShowFireworks(false);
+            onFireworksComplete?.();
+          }}
+        />
         <IconButton
           ref={closeButtonRef}
           onClick={onClose}
@@ -205,58 +215,84 @@ const TaskPlayScreen = ({
               </IconButton>
             )}
 
-            <IconButton
-              onClick={() => setIsPaused(!isPaused)}
-              aria-label={isPaused ? 'Возобновить таймер' : 'Поставить таймер на паузу'}
-              sx={{
-                width: 64,
-                height: 64,
-                bgcolor: 'primary.main',
-                color: 'primary.contrastText',
-                '&:hover': {
-                  bgcolor: 'primary.dark',
-                },
-              }}
-            >
-              {isPaused ? (
+            {isPaused && (
+              <IconButton
+                onClick={() => setIsPaused(false)}
+                aria-label="Возобновить таймер"
+                sx={{
+                  width: 64,
+                  height: 64,
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
                 <PlayArrowIcon sx={{ fontSize: 32 }} />
-              ) : (
-                <PauseIcon sx={{ fontSize: 32 }} />
-              )}
-            </IconButton>
+              </IconButton>
+            )}
 
-            <IconButton
-              onClick={() => {
-                if (task.status === 'done') {
-                  // Если задача уже завершена, переходим к следующей
-                  onMoveToNext();
-                  onClose();
-                } else {
-                  // Если задача еще не завершена, помечаем как завершенную
+            {task.status !== 'done' && !isPaused && (
+              <IconButton
+                onClick={() => setIsPaused(true)}
+                aria-label="Поставить таймер на паузу"
+                sx={{
+                  width: 64,
+                  height: 64,
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                <PauseIcon sx={{ fontSize: 32 }} />
+              </IconButton>
+            )}
+
+            {task.status !== 'done' && (
+              <IconButton
+                onClick={() => {
                   setShowFireworks(true);
-                  onMarkComplete(task.id);
-                }
-              }}
-              aria-label={
-                task.status === 'done' ? 'Перейти к следующей задаче' : 'Завершить задачу'
-              }
-              sx={{
-                width: 120,
-                height: 120,
-                borderRadius: '50%',
-                bgcolor: task.status === 'done' ? 'primary.main' : 'success.main',
-                color: task.status === 'done' ? 'primary.contrastText' : 'success.contrastText',
-                '&:hover': {
-                  bgcolor: task.status === 'done' ? 'primary.dark' : 'success.dark',
-                },
-              }}
-            >
-              {task.status === 'done' ? (
-                <SkipNextIcon sx={{ fontSize: 60 }} />
-              ) : (
+                  onMarkComplete(task.id, passedSeconds);
+                }}
+                aria-label="Завершить задачу"
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  bgcolor: 'success.main',
+                  color: 'success.contrastText',
+                  '&:hover': {
+                    bgcolor: 'success.dark',
+                  },
+                }}
+              >
                 <CheckIcon sx={{ fontSize: 60 }} />
-              )}
-            </IconButton>
+              </IconButton>
+            )}
+
+            {showNextButton && (
+              <IconButton
+                onClick={() => {
+                  onMoveToNext();
+                }}
+                aria-label={'Перейти к следующей задаче'}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: '50%',
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                <SkipNextIcon sx={{ fontSize: 60 }} />
+              </IconButton>
+            )}
           </Box>
         </Box>
       </Box>

@@ -4,6 +4,16 @@ import { useNavigate, useSearchParams } from 'react-router';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { Box, Button, Link, List, Typography } from '@mui/material';
 
+import AchievementNotification from '../Accomplishments/AchievementNotification';
+import { checkAccomplishments } from '../Accomplishments/checkAccomplishments';
+import { ACCOMPLISHMENTS } from '../Accomplishments/constants';
+import { type Accomplishment } from '../Accomplishments/types';
+import {
+  loadTaskStatistics,
+  resetConsecutiveCounter,
+  updateAccomplishmentStatus,
+  updateTaskStatistics,
+} from '../Accomplishments/utils';
 import { type Task } from '../Settings/TaskItem';
 import ProcessTaskItem from './ProcessTaskItem';
 import TaskPlayScreen from './TaskPlayScreen';
@@ -20,6 +30,10 @@ function Process() {
 
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isConsecutiveSession, setIsConsecutiveSession] = useState(false);
+  const [newAchievements, setNewAchievements] = useState<Accomplishment[]>([]);
+  const [fireworksCompleted, setFireworksCompleted] = useState(false);
+  const [pendingAchievements, setPendingAchievements] = useState<Accomplishment[]>([]);
   const leafTasksQueueRef = useRef<Task[]>([]);
   const currentTaskIndexRef = useRef<number>(0);
   const currentTopLevelTaskRef = useRef<Task | null>(null);
@@ -50,6 +64,10 @@ function Process() {
       });
     } else {
       setSelectedTask(task);
+    }
+    // Если сессия не была прервана, устанавливаем флаг подряд
+    if (!isConsecutiveSession) {
+      setIsConsecutiveSession(true);
     }
   };
 
@@ -130,6 +148,13 @@ function Process() {
     leafTasksQueueRef.current = [];
     currentTaskIndexRef.current = 0;
     currentTopLevelTaskRef.current = null;
+
+    // Сбрасываем счетчик подряд при закрытии экрана
+    resetConsecutiveCounter();
+    setIsConsecutiveSession(false);
+    setFireworksCompleted(false);
+    setPendingAchievements([]);
+    setNewAchievements([]);
   };
 
   const updateTaskInTree = (
@@ -292,6 +317,8 @@ function Process() {
         const nextTask = leafTasksQueueRef.current[nextIndex];
         currentTaskIndexRef.current = nextIndex;
         setSelectedTask(nextTask);
+        // Сохраняем сессию подряд при переходе к следующей задаче
+        setIsConsecutiveSession(true);
         return;
       }
 
@@ -319,6 +346,8 @@ function Process() {
             currentTopLevelTaskRef.current = remainingSiblings[0];
             currentTaskIndexRef.current = 0;
             setSelectedTask(incompleteLeafTasks[0]);
+            // Сохраняем сессию подряд при переходе к следующей задаче
+            setIsConsecutiveSession(true);
             return;
           }
         }
@@ -342,6 +371,8 @@ function Process() {
           currentTopLevelTaskRef.current = nextTopLevelTask;
           currentTaskIndexRef.current = 0;
           setSelectedTask(newLeafTasks[0]);
+          // Сохраняем сессию подряд при переходе к следующей задаче
+          setIsConsecutiveSession(true);
           return;
         }
       }
@@ -355,18 +386,24 @@ function Process() {
     [findFirstIncompleteTask, collectAllLeafTasks, findSiblings, selectedTask, findTaskInTree],
   );
 
-  const markTaskAsDone = (taskId: string) => {
+  const markTaskAsDone = (taskId: string, actualTime: number) => {
     setTasks((prevTasks) => {
+      // Находим задачу до обновления для получения данных
+      const task = findTaskInTree(prevTasks, taskId);
+      if (!task) {
+        return prevTasks;
+      }
+
       // Помечаем задачу и все её подзадачи как выполненные
-      let updated = updateTaskInTree(prevTasks, taskId, (task) => markTaskAndSubtasksAsDone(task));
+      let updated = updateTaskInTree(prevTasks, taskId, (t) => markTaskAndSubtasksAsDone(t));
 
       // Проверяем родителя и если все его дети выполнены, помечаем родителя тоже
       // Это работает рекурсивно вверх по дереву
       let parent = findParentTask(updated, taskId);
       while (parent) {
         if (areAllSubtasksDone(parent)) {
-          updated = updateTaskInTree(updated, parent.id, (task) => ({
-            ...task,
+          updated = updateTaskInTree(updated, parent.id, (t) => ({
+            ...t,
             status: 'done' as const,
           }));
           parent = findParentTask(updated, parent.id);
@@ -378,9 +415,9 @@ function Process() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 
       // Обновляем очередь, чтобы она содержала актуальные задачи из дерева
-      leafTasksQueueRef.current = leafTasksQueueRef.current.map((task) => {
-        const taskFromTree = findTaskInTree(updated, task.id);
-        return taskFromTree || task;
+      leafTasksQueueRef.current = leafTasksQueueRef.current.map((t) => {
+        const taskFromTree = findTaskInTree(updated, t.id);
+        return taskFromTree || t;
       });
 
       // Обновляем selectedTask, если это та же задача
@@ -389,6 +426,43 @@ function Process() {
         if (updatedTask) {
           setSelectedTask(updatedTask);
         }
+      }
+
+      // Обновляем статистику и проверяем достижения
+      const stats = loadTaskStatistics();
+
+      const updatedStats = updateTaskStatistics(
+        {
+          taskId,
+          duration: task.duration,
+          actualTime,
+          completedAt: new Date(),
+          isConsecutive: isConsecutiveSession,
+        },
+        stats,
+      );
+
+      // Проверяем достижения
+      const newAchievementIds = checkAccomplishments(updatedStats);
+
+      // Сбрасываем состояние фейерверков при завершении новой задачи
+      setFireworksCompleted(false);
+
+      if (newAchievementIds.length > 0) {
+        // Обновляем статусы достижений в статистике
+        let finalStats = updatedStats;
+        const newAchievementsList: Accomplishment[] = [];
+
+        for (const achievementId of newAchievementIds) {
+          finalStats = updateAccomplishmentStatus(achievementId, true, finalStats);
+          const accomplishment = ACCOMPLISHMENTS.find((acc) => acc.id === achievementId);
+          if (accomplishment) {
+            newAchievementsList.push(accomplishment);
+          }
+        }
+
+        // Сохраняем достижения для показа после фейерверков
+        setPendingAchievements(newAchievementsList);
       }
 
       return updated;
@@ -711,6 +785,30 @@ function Process() {
         onMoveToNext={handleMoveToNext}
         onMoveToPrevious={handleMoveToPrevious}
         canGoBack={canMoveToPrevious()}
+        onFireworksComplete={() => {
+          setFireworksCompleted(true);
+          // Показываем достижения после завершения фейерверков
+          if (pendingAchievements.length > 0) {
+            setNewAchievements(pendingAchievements);
+            setPendingAchievements([]);
+          }
+          // Если достижений нет, кнопка "К следующей задаче" станет видимой сразу
+        }}
+        showNextButton={
+          selectedTask?.status === 'done' &&
+          fireworksCompleted &&
+          newAchievements.length === 0 &&
+          pendingAchievements.length === 0
+        }
+      />
+
+      <AchievementNotification
+        achievements={newAchievements}
+        open={newAchievements.length > 0 && fireworksCompleted}
+        onClose={() => {
+          setNewAchievements([]);
+          // Не сбрасываем fireworksCompleted, чтобы кнопка "К следующей задаче" оставалась видимой
+        }}
       />
     </>
   );
