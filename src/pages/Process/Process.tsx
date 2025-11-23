@@ -535,8 +535,14 @@ function Process() {
           }
         }
 
-        // Сохраняем достижения для показа после фейерверков
+        // Сохраняем достижения для показа
         setPendingAchievements(newAchievementsList);
+        // Показываем достижения сразу (фейерверки будут в AchievementNotification)
+        setNewAchievements(newAchievementsList);
+        setPendingAchievements([]);
+      } else {
+        // Если достижений нет, сразу устанавливаем fireworksCompleted в true
+        setFireworksCompleted(true);
       }
 
       return updated;
@@ -869,15 +875,6 @@ function Process() {
               pendingAchievements.length === 0)) &&
           canMoveToPrevious()
         }
-        onFireworksComplete={() => {
-          setFireworksCompleted(true);
-          // Показываем достижения после завершения фейерверков
-          if (pendingAchievements.length > 0) {
-            setNewAchievements(pendingAchievements);
-            setPendingAchievements([]);
-          }
-          // Если достижений нет, кнопка "К следующей задаче" станет видимой сразу
-        }}
         showNextButton={
           selectedTask?.status === 'done' &&
           fireworksCompleted &&
@@ -888,10 +885,11 @@ function Process() {
 
       <AchievementNotification
         achievements={newAchievements}
-        open={newAchievements.length > 0 && fireworksCompleted}
+        open={newAchievements.length > 0}
         onClose={() => {
           setNewAchievements([]);
-          // Не сбрасываем fireworksCompleted, чтобы кнопка "К следующей задаче" оставалась видимой
+          // После закрытия достижений устанавливаем fireworksCompleted в true
+          setFireworksCompleted(true);
         }}
       />
     </>

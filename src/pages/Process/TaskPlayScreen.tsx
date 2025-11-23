@@ -10,7 +10,6 @@ import { Box, Dialog, IconButton, Typography } from '@mui/material';
 
 import { useImageUrl } from '@/hooks/useImageUrl';
 
-import Fireworks from '../../components/Fireworks';
 import { type Task } from '../Settings/TaskItem';
 import { formatDurationWithSeconds } from '../Settings/duration';
 
@@ -22,7 +21,6 @@ const TaskPlayScreen = ({
   onMoveToNext,
   onMoveToPrevious,
   canGoBack,
-  onFireworksComplete,
   showNextButton = true,
 }: {
   task: Task | null;
@@ -32,13 +30,11 @@ const TaskPlayScreen = ({
   onMoveToNext: () => void;
   onMoveToPrevious: () => void;
   canGoBack: boolean;
-  onFireworksComplete?: () => void;
   showNextButton?: boolean;
 }) => {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [passedSeconds, setPassedSeconds] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [showFireworks, setShowFireworks] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const imageUrl = useImageUrl(task?.image?.status === 'ready' ? task.image.imageId : undefined);
 
@@ -67,7 +63,6 @@ const TaskPlayScreen = ({
       if (isNewTask) {
         setPassedSeconds(0);
         setIsPaused(false);
-        setShowFireworks(false);
         prevTaskIdRef.current = task.id;
       }
     }
@@ -78,7 +73,6 @@ const TaskPlayScreen = ({
   useEffect(() => {
     if (!open) {
       prevTaskIdRef.current = null;
-      setShowFireworks(false);
     }
   }, [open]);
 
@@ -117,14 +111,6 @@ const TaskPlayScreen = ({
           overflow: 'hidden',
         }}
       >
-        <Fireworks
-          key={task?.id}
-          active={showFireworks}
-          onComplete={() => {
-            setShowFireworks(false);
-            onFireworksComplete?.();
-          }}
-        />
         <IconButton
           ref={closeButtonRef}
           onClick={onClose}
@@ -272,7 +258,6 @@ const TaskPlayScreen = ({
             {task.status !== 'done' && (
               <IconButton
                 onClick={() => {
-                  setShowFireworks(true);
                   onMarkComplete(task.id, passedSeconds);
                 }}
                 aria-label="Завершить задачу"

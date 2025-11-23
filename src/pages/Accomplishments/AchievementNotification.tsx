@@ -17,11 +17,13 @@ const AchievementNotification = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFireworks, setShowFireworks] = useState(false);
+  const [fireworksCompleted, setFireworksCompleted] = useState(false);
 
   // Показываем фейерверки при открытии нового достижения
   useEffect(() => {
     if (open && achievements.length > 0) {
       setShowFireworks(true);
+      setFireworksCompleted(false);
     }
   }, [open, achievements.length, currentIndex]);
 
@@ -44,9 +46,11 @@ const AchievementNotification = ({
       onClose();
       setCurrentIndex(0);
       setShowFireworks(false);
+      setFireworksCompleted(false);
     } else {
       setCurrentIndex((prev) => prev + 1);
       setShowFireworks(true);
+      setFireworksCompleted(false);
     }
   };
 
@@ -54,6 +58,7 @@ const AchievementNotification = ({
     onClose();
     setCurrentIndex(0);
     setShowFireworks(false);
+    setFireworksCompleted(false);
   };
 
   return (
@@ -77,7 +82,14 @@ const AchievementNotification = ({
           overflow: 'hidden',
         }}
       >
-        <Fireworks active={showFireworks} onComplete={() => setShowFireworks(false)} />
+        <Fireworks
+          key={currentAchievement.id}
+          active={showFireworks}
+          onComplete={() => {
+            setShowFireworks(false);
+            setFireworksCompleted(true);
+          }}
+        />
         <IconButton
           onClick={handleClose}
           aria-label="Закрыть"
@@ -100,6 +112,8 @@ const AchievementNotification = ({
             flex: 1,
             p: 4,
             gap: 4,
+            position: 'relative',
+            zIndex: 0,
           }}
         >
           <Box
@@ -167,24 +181,27 @@ const AchievementNotification = ({
             </Typography>
           )}
 
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleNext}
-            sx={{
-              mt: 4,
-              px: 6,
-              py: 1.5,
-              fontSize: '1.1rem',
-              textTransform: 'none',
-              bgcolor: 'primary.main',
-              '&:hover': {
-                bgcolor: 'primary.dark',
-              },
-            }}
-          >
-            Далее
-          </Button>
+          <Box sx={{ mt: 4, minHeight: 48 }}>
+            {fireworksCompleted && (
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleNext}
+                sx={{
+                  px: 6,
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  textTransform: 'none',
+                  bgcolor: 'primary.main',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                Далее
+              </Button>
+            )}
+          </Box>
         </Box>
       </Box>
     </Dialog>
