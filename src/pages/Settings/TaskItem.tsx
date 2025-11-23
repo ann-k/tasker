@@ -106,7 +106,7 @@ const TaskItem = ({
         sx={{
           px: 1,
           py: 1.5,
-          pl: level > 0 ? level * 2 + 1 + (hasSubtasks ? 0 : 5) : 1,
+          pl: level > 0 ? level * 2 + 1 : 1,
           borderBottom: '1px solid',
           borderColor: 'divider',
           flexDirection: 'row',
@@ -117,8 +117,8 @@ const TaskItem = ({
         }}
       >
         <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ flex: 1, minWidth: 0 }}>
-          {hasSubtasks && (
-            <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
+          <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
+            {hasSubtasks ? (
               <IconButton
                 size="small"
                 onClick={handleChevronClick}
@@ -133,8 +133,8 @@ const TaskItem = ({
               >
                 <ChevronRightIcon fontSize="small" />
               </IconButton>
-            </ListItemIcon>
-          )}
+            ) : null}
+          </ListItemIcon>
 
           <ListItemText
             sx={{ flex: 1 }}
