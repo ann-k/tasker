@@ -118,11 +118,6 @@ const AchievementNotification = ({
         >
           <Box
             sx={{
-              width: '100%',
-              maxWidth: 600,
-              borderRadius: 2,
-              overflow: 'hidden',
-              boxShadow: 3,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -132,11 +127,13 @@ const AchievementNotification = ({
               src={currentAchievement.image}
               alt=""
               style={{
-                width: '100%',
-                height: 'auto',
-                maxHeight: '400px',
+                width: 200,
+                height: 200,
+                borderRadius: '50%',
                 objectFit: 'cover',
                 display: 'block',
+                border: '8px solid',
+                borderColor: '#ba68c8',
               }}
             />
           </Box>
