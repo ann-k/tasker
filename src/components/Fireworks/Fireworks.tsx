@@ -48,8 +48,8 @@ const Fireworks = ({ active, onComplete }: { active: boolean; onComplete?: () =>
         mouse: { click: false, move: false, max: 1 },
         sound: {
           enabled: true,
-          files: ['/assets/sounds/success.wav'],
-          volume: { min: 0.3, max: 0.6 },
+          files: ['/assets/sounds/achievement.mp3'],
+          volume: { min: 1, max: 1 },
         },
       });
 
