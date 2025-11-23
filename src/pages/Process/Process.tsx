@@ -95,49 +95,165 @@ function Process() {
   }, []);
 
   const handlePlayClick = (task: Task) => {
+    // Use the task ID to find the actual task in the current tasks tree
+    const taskId = task.id;
+    const actualTask = findTaskInTree(tasks, taskId);
+    if (!actualTask) {
+      return;
+    }
+
     // Find the parent task
-    const parent = findParentTask(tasks, task.id);
+    const parent = findParentTask(tasks, taskId);
 
     if (parent) {
-      // If task has a parent, collect all leaf tasks from parent
-      const allLeafTasks = collectAllLeafTasks(parent);
+      // Get the actual parent from the tree to ensure we have the latest state
+      const actualParent = findTaskInTree(tasks, parent.id);
+      if (!actualParent) {
+        return;
+      }
+
+      // If task has a parent, collect all leaf tasks from parent using the actual tree
+      const allLeafTasks = collectAllLeafTasks(actualParent);
       const incompleteLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
 
-      // Find the index of the selected task in the queue
-      const taskIndex = incompleteLeafTasks.findIndex((t) => t.id === task.id);
-      if (taskIndex !== -1) {
-        // Start from the selected task and continue with remaining tasks
-        const remainingTasks = incompleteLeafTasks.slice(taskIndex);
-        leafTasksQueueRef.current = remainingTasks;
-        currentTopLevelTaskRef.current = parent;
-        currentTaskIndexRef.current = 0;
-        handleTaskSelect(remainingTasks[0]);
+      // Check if the clicked task is a leaf task
+      const isLeafTask = !actualTask.subtasks || actualTask.subtasks.length === 0;
+
+      if (isLeafTask) {
+        // For leaf tasks, find the exact position in the incomplete leaf tasks list
+        const taskIndex = incompleteLeafTasks.findIndex((t) => t.id === taskId);
+
+        if (taskIndex !== -1) {
+          // Use the actual task from the tree to ensure we have the latest state
+          const selectedTask = findTaskInTree(tasks, taskId);
+
+          if (selectedTask && selectedTask.status !== 'done') {
+            const remainingTasks = incompleteLeafTasks.slice(taskIndex);
+            // Replace with the actual task from tree to ensure latest state
+            remainingTasks[0] = selectedTask;
+            leafTasksQueueRef.current = remainingTasks;
+            currentTopLevelTaskRef.current = actualParent;
+            currentTaskIndexRef.current = 0;
+            handleTaskSelect(selectedTask);
+            return;
+          }
+        }
+      }
+
+      // If the clicked task is not a leaf task (has subtasks), find its first incomplete leaf task
+      if (!isLeafTask) {
+        const taskLeafTasks = collectAllLeafTasks(actualTask);
+        const incompleteTaskLeafTasks = taskLeafTasks.filter((t) => t.status !== 'done');
+
+        if (incompleteTaskLeafTasks.length > 0) {
+          // Find where this task's first leaf task starts in the parent's leaf tasks
+          const firstTaskLeafIndex = incompleteLeafTasks.findIndex(
+            (t) => t.id === incompleteTaskLeafTasks[0].id,
+          );
+
+          if (firstTaskLeafIndex !== -1) {
+            const selectedTask = findTaskInTree(tasks, incompleteTaskLeafTasks[0].id);
+            if (selectedTask) {
+              const remainingTasks = incompleteLeafTasks.slice(firstTaskLeafIndex);
+              remainingTasks[0] = selectedTask;
+              leafTasksQueueRef.current = remainingTasks;
+              currentTopLevelTaskRef.current = actualParent;
+              currentTaskIndexRef.current = 0;
+              handleTaskSelect(selectedTask);
+            }
+          }
+        }
       }
     } else {
       // If task is top-level, collect all leaf tasks from it and its siblings
-      const siblings = findSiblings(tasks, task.id);
-      const taskIndex = siblings.findIndex((t) => t.id === task.id);
+      const siblings = findSiblings(tasks, actualTask.id);
+      const taskIndex = siblings.findIndex((t) => t.id === actualTask.id);
 
       if (taskIndex !== -1) {
         // Collect leaf tasks from this task and all remaining siblings
         const remainingSiblings = siblings.slice(taskIndex);
-        const allLeafTasks: Task[] = [];
 
-        for (const sibling of remainingSiblings) {
-          allLeafTasks.push(...collectAllLeafTasks(sibling));
-        }
+        // Check if the clicked task is a leaf task
+        const isLeafTask = !actualTask.subtasks || actualTask.subtasks.length === 0;
 
-        const incompleteLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
-        const selectedTaskIndex = incompleteLeafTasks.findIndex((t) => t.id === task.id);
+        if (isLeafTask) {
+          // For leaf tasks, collect all leaf tasks and find the clicked task
+          const allLeafTasks: Task[] = [];
+          for (const sibling of remainingSiblings) {
+            allLeafTasks.push(...collectAllLeafTasks(sibling));
+          }
+          const incompleteLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
 
-        if (selectedTaskIndex !== -1) {
-          // Start from the selected task and continue with remaining tasks
-          const remainingTasks = incompleteLeafTasks.slice(selectedTaskIndex);
-          leafTasksQueueRef.current = remainingTasks;
-          // Store the first sibling as the top-level task reference
-          currentTopLevelTaskRef.current = remainingSiblings[0];
-          currentTaskIndexRef.current = 0;
-          handleTaskSelect(remainingTasks[0]);
+          const selectedTaskIndex = incompleteLeafTasks.findIndex((t) => t.id === actualTask.id);
+
+          if (selectedTaskIndex !== -1) {
+            // Start from the selected task and continue with remaining tasks
+            const selectedTask = findTaskInTree(tasks, actualTask.id);
+            if (selectedTask) {
+              const remainingTasks = incompleteLeafTasks.slice(selectedTaskIndex);
+              remainingTasks[0] = selectedTask;
+              leafTasksQueueRef.current = remainingTasks;
+              // Store the first sibling as the top-level task reference
+              currentTopLevelTaskRef.current = remainingSiblings[0];
+              currentTaskIndexRef.current = 0;
+              handleTaskSelect(selectedTask);
+            }
+          } else if (incompleteLeafTasks.length > 0) {
+            // Task not found, but there are incomplete tasks - this shouldn't happen for a leaf task
+            const remainingTasks = incompleteLeafTasks.slice(0);
+            leafTasksQueueRef.current = remainingTasks;
+            currentTopLevelTaskRef.current = remainingSiblings[0];
+            currentTaskIndexRef.current = 0;
+            handleTaskSelect(remainingTasks[0]);
+          }
+        } else {
+          // If the clicked task is not a leaf task (has subtasks), find its first incomplete leaf task
+          // First, collect leaf tasks ONLY from the clicked task
+          const clickedTaskLeafTasks = collectAllLeafTasks(actualTask);
+          const incompleteClickedTaskLeafTasks = clickedTaskLeafTasks.filter(
+            (t) => t.status !== 'done',
+          );
+
+          if (incompleteClickedTaskLeafTasks.length > 0) {
+            // Find the first incomplete leaf task of the clicked task
+            const firstIncompleteLeafTask = incompleteClickedTaskLeafTasks[0];
+
+            // Now collect all leaf tasks from this task and remaining siblings to find the position
+            const allLeafTasks: Task[] = [];
+            for (const sibling of remainingSiblings) {
+              allLeafTasks.push(...collectAllLeafTasks(sibling));
+            }
+            const incompleteLeafTasks = allLeafTasks.filter((t) => t.status !== 'done');
+
+            // Find this task in the complete list
+            const firstTaskLeafIndex = incompleteLeafTasks.findIndex(
+              (t) => t.id === firstIncompleteLeafTask.id,
+            );
+
+            if (firstTaskLeafIndex !== -1) {
+              // Get the actual task from the tree
+              const selectedTask = findTaskInTree(tasks, firstIncompleteLeafTask.id);
+              if (selectedTask) {
+                const remainingTasks = incompleteLeafTasks.slice(firstTaskLeafIndex);
+                remainingTasks[0] = selectedTask;
+                leafTasksQueueRef.current = remainingTasks;
+                currentTopLevelTaskRef.current = remainingSiblings[0];
+                currentTaskIndexRef.current = 0;
+                handleTaskSelect(selectedTask);
+              }
+            } else {
+              // Task not found in incompleteLeafTasks - this shouldn't happen
+              // Fallback to first incomplete task
+              const selectedTask = findTaskInTree(tasks, incompleteLeafTasks[0].id);
+              if (selectedTask) {
+                leafTasksQueueRef.current = incompleteLeafTasks;
+                incompleteLeafTasks[0] = selectedTask;
+                currentTopLevelTaskRef.current = remainingSiblings[0];
+                currentTaskIndexRef.current = 0;
+                handleTaskSelect(selectedTask);
+              }
+            }
+          }
         }
       }
     }
@@ -860,7 +976,7 @@ function Process() {
                   subtasks={task.subtasks}
                   expandedTasks={expandedTasks}
                   onToggleExpand={handleToggleExpand}
-                  onPlayClick={() => handlePlayClick(task)}
+                  onPlayClick={handlePlayClick}
                   onMarkIncomplete={handleMarkIncomplete}
                 />
               ))}

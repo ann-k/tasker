@@ -43,16 +43,15 @@ const ProcessTaskItem = ({
   subtasks?: Task[];
   expandedTasks: Set<string>;
   onToggleExpand: (taskId: string) => void;
-  onPlayClick?: (taskId: string) => void;
+  onPlayClick?: (task: Task) => void;
   onMarkIncomplete?: (taskId: string) => void;
   level?: number;
 }) => {
   const hasSubtasks = Boolean(subtasks && subtasks.length > 0);
   const isExpanded = expandedTasks.has(id);
   const isCompleted = status === 'done';
-  const isLeafTask = !hasSubtasks;
   const isIncomplete = status !== 'done';
-  const showPlayButton = isLeafTask && isIncomplete && onPlayClick !== undefined;
+  const showPlayButton = isIncomplete && onPlayClick !== undefined;
   const completedSubtasksInfo = hasSubtasks ? countCompletedSubtasks(subtasks) : null;
   const displayText = hasSubtasks
     ? `${completedSubtasksInfo?.completed || 0} из ${completedSubtasksInfo?.total || 0} подзадач выполнено`
@@ -162,7 +161,17 @@ const ProcessTaskItem = ({
             <IconButton
               size="small"
               sx={{ color: 'primary.main' }}
-              onClick={() => onPlayClick?.(id)}
+              onClick={() => {
+                const task: Task = {
+                  id,
+                  name,
+                  duration,
+                  image,
+                  status,
+                  subtasks,
+                };
+                onPlayClick?.(task);
+              }}
               aria-label="Запустить выполнение"
             >
               <PlayArrowIcon fontSize="small" />
