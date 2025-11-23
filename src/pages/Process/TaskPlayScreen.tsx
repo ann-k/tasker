@@ -58,12 +58,29 @@ const TaskPlayScreen = ({
     }
   }, [open]);
 
+  const prevTaskIdRef = useRef<string | null>(null);
+
+  // Сбрасываем состояние при изменении ID задачи
   useEffect(() => {
     if (open && task) {
-      setPassedSeconds(0);
-      setIsPaused(false);
+      const isNewTask = prevTaskIdRef.current !== task.id;
+      if (isNewTask) {
+        setPassedSeconds(0);
+        setIsPaused(false);
+        setShowFireworks(false);
+        prevTaskIdRef.current = task.id;
+      }
     }
-  }, [open, task]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, task?.id]);
+
+  // Сбрасываем при закрытии диалога
+  useEffect(() => {
+    if (!open) {
+      prevTaskIdRef.current = null;
+      setShowFireworks(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open && task && !isPaused && task.status !== 'done') {
@@ -101,6 +118,7 @@ const TaskPlayScreen = ({
         }}
       >
         <Fireworks
+          key={task?.id}
           active={showFireworks}
           onComplete={() => {
             setShowFireworks(false);

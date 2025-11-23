@@ -7,37 +7,47 @@ const Fireworks = ({ active, onComplete }: { active: boolean; onComplete?: () =>
   const fireworksRef = useRef<FireworksJS | null>(null);
 
   useEffect(() => {
-    if (!active || !containerRef.current) return;
-
-    // Создаем экземпляр fireworks только когда active становится true
-    if (!fireworksRef.current) {
-      fireworksRef.current = new FireworksJS(containerRef.current, {
-        autoresize: true,
-        opacity: 0.5,
-        acceleration: 1.05,
-        friction: 0.97,
-        gravity: 1.5,
-        particles: 100,
-        traceLength: 3,
-        traceSpeed: 10,
-        explosion: 8,
-        intensity: 50,
-        flickering: 50,
-        lineStyle: 'round',
-        hue: { min: 0, max: 360 },
-        delay: { min: 15, max: 30 },
-        rocketsPoint: { min: 50, max: 50 },
-        lineWidth: { explosion: { min: 3, max: 6 }, trace: { min: 2, max: 4 } },
-        brightness: { min: 50, max: 80 },
-        decay: { min: 0.015, max: 0.03 },
-        mouse: { click: false, move: false, max: 1 },
-        sound: {
-          enabled: true,
-          files: ['/assets/sounds/success.wav'],
-          volume: { min: 0.3, max: 0.6 },
-        },
-      });
+    if (!active || !containerRef.current) {
+      // Останавливаем и очищаем при деактивации
+      if (fireworksRef.current) {
+        fireworksRef.current.stop();
+        fireworksRef.current = null;
+      }
+      return;
     }
+
+    // Всегда создаем новый экземпляр при активации
+    if (fireworksRef.current) {
+      fireworksRef.current.stop();
+      fireworksRef.current = null;
+    }
+
+    fireworksRef.current = new FireworksJS(containerRef.current, {
+      autoresize: true,
+      opacity: 0.5,
+      acceleration: 1.05,
+      friction: 0.97,
+      gravity: 1.5,
+      particles: 100,
+      traceLength: 3,
+      traceSpeed: 10,
+      explosion: 8,
+      intensity: 50,
+      flickering: 50,
+      lineStyle: 'round',
+      hue: { min: 0, max: 360 },
+      delay: { min: 15, max: 30 },
+      rocketsPoint: { min: 50, max: 50 },
+      lineWidth: { explosion: { min: 3, max: 6 }, trace: { min: 2, max: 4 } },
+      brightness: { min: 50, max: 80 },
+      decay: { min: 0.015, max: 0.03 },
+      mouse: { click: false, move: false, max: 1 },
+      sound: {
+        enabled: true,
+        files: ['/assets/sounds/success.wav'],
+        volume: { min: 0.3, max: 0.6 },
+      },
+    });
 
     // Запускаем анимацию и сразу запускаем несколько фейерверков
     fireworksRef.current.start();
@@ -58,6 +68,7 @@ const Fireworks = ({ active, onComplete }: { active: boolean; onComplete?: () =>
       clearTimeout(timeout);
       if (fireworksRef.current) {
         fireworksRef.current.stop();
+        fireworksRef.current = null;
       }
     };
   }, [active, onComplete]);

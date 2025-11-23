@@ -371,6 +371,8 @@ function Process() {
         setSelectedTask(nextTask);
         // Сохраняем сессию подряд при переходе к следующей задаче
         setIsConsecutiveSession(true);
+        // Сбрасываем состояние фейерверков для новой задачи
+        setFireworksCompleted(false);
         return;
       }
 
@@ -400,6 +402,8 @@ function Process() {
             setSelectedTask(incompleteLeafTasks[0]);
             // Сохраняем сессию подряд при переходе к следующей задаче
             setIsConsecutiveSession(true);
+            // Сбрасываем состояние фейерверков для новой задачи
+            setFireworksCompleted(false);
             return;
           }
         }
@@ -425,6 +429,8 @@ function Process() {
           setSelectedTask(newLeafTasks[0]);
           // Сохраняем сессию подряд при переходе к следующей задаче
           setIsConsecutiveSession(true);
+          // Сбрасываем состояние фейерверков для новой задачи
+          setFireworksCompleted(false);
           return;
         }
       }
