@@ -214,7 +214,7 @@ const TaskPlayScreen = ({
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', mt: 2 }}>
+          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', mt: 2, minHeight: 120 }}>
             {canGoBack && (
               <IconButton
                 onClick={onMoveToPrevious}
