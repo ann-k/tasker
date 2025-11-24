@@ -6,7 +6,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
-import { Box, Dialog, IconButton, Typography } from '@mui/material';
+import { Box, Dialog, IconButton, LinearProgress, Typography } from '@mui/material';
 
 import { useImageUrl } from '@/hooks/useImageUrl';
 
@@ -208,28 +208,67 @@ const TaskPlayScreen = ({
               Выполнено за {formatDurationReadable(completedTimeRef.current || passedSeconds)}
             </Typography>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
-              <Typography
-                variant="h6"
-                component="p"
-                sx={{
-                  color: 'text.secondary',
-                  textAlign: 'center',
-                }}
-              >
-                Прошло: {formatDurationWithSeconds(passedSeconds)}
-              </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '600px',
+                px: 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                <Typography
+                  variant="body1"
+                  component="p"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  Прошло {formatDurationWithSeconds(passedSeconds)}
+                </Typography>
 
-              <Typography
-                variant="h6"
-                component="p"
-                sx={{
-                  color: 'text.secondary',
-                  textAlign: 'center',
-                }}
-              >
-                Осталось: {formatDurationWithSeconds(remainingSeconds)}
-              </Typography>
+                <Typography
+                  variant="body1"
+                  component="p"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  Осталось {formatDurationWithSeconds(remainingSeconds)}
+                </Typography>
+              </Box>
+
+              <Box sx={{ position: 'relative', width: '100%' }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={Math.min(100, Math.max(0, (passedSeconds / task.duration) * 100))}
+                  sx={{
+                    height: 12,
+                    borderRadius: 6,
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: `${Math.min(100, Math.max(0, (passedSeconds / task.duration) * 100))}%`,
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.dark',
+                    border: '2px solid',
+                    borderColor: 'background.paper',
+                    zIndex: 1,
+                    transition: 'left 0.3s ease',
+                  }}
+                />
+              </Box>
             </Box>
           )}
 
