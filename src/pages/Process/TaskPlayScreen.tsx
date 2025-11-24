@@ -102,273 +102,293 @@ const TaskPlayScreen = ({
 
   const remainingSeconds = Math.max(0, task.duration - passedSeconds);
 
+  const displayImage = Boolean(task.image && task.image.status === 'ready' && imageUrl);
+
   return (
     <Dialog fullScreen open={open} onClose={onClose} aria-labelledby="task-play-title" autoFocus>
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          position: 'relative',
-          overflow: 'hidden',
+          justifyContent: 'center',
+          height: '100vh',
+          width: '100vw',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          overflow: 'auto',
         }}
       >
-        <IconButton
-          ref={closeButtonRef}
-          onClick={onClose}
-          aria-label="Закрыть"
-          sx={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-
         <Box
           sx={{
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
             justifyContent: 'center',
-            maxHeight: '100vh',
-            flex: 1,
-            p: 4,
-            gap: 3,
+            alignItems: 'center',
           }}
         >
-          {task.image && task.image.status === 'ready' && imageUrl && (
-            <Box
-              sx={{
-                width: 'fit-content',
-                maxWidth: '100%',
-                borderRadius: 2,
-                overflow: 'hidden',
-                boxShadow: 3,
-                display: 'flex',
-                alignItems: 'flex-start',
-              }}
-            >
-              <img
-                src={imageUrl}
-                alt={task.image.imageDescription || ''}
-                style={{
-                  width: 'auto',
-                  height: 'auto',
-                  maxWidth: '800px',
-                  maxHeight: '600px',
-                  objectFit: 'contain',
-                  display: 'block',
-                }}
-              />
-            </Box>
-          )}
+          <IconButton
+            ref={closeButtonRef}
+            onClick={onClose}
+            aria-label="Закрыть"
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
 
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
+              display: 'grid',
+              gridTemplateRows: `${displayImage ? 'minmax(100px, max-content) ' : ''}max-content max-content max-content`,
+              alignItems: 'end',
               justifyContent: 'center',
-              gap: 1,
+              justifyItems: 'center',
+              maxHeight: '100vh',
+              p: 4,
+              gap: 3,
             }}
           >
-            {task.status === 'done' && (
-              <CheckIcon
-                aria-label="Выполнено"
+            {displayImage && (
+              <Box
                 sx={{
-                  fontSize: 32,
-                  color: 'success.main',
+                  maxWidth: '500px',
+                  maxHeight: '100%',
+                  borderRadius: 2,
+                  overflow: 'hidden',
+                  boxShadow: 3,
+                  display: 'grid',
+                  aspectRatio: '1344/832',
                 }}
-              />
+              >
+                <img
+                  src={imageUrl || ''}
+                  alt={task.image?.imageDescription || ''}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    display: 'block',
+                  }}
+                />
+              </Box>
             )}
-            <Typography
-              id="task-play-title"
-              variant="h4"
-              component="h1"
-              sx={{
-                fontWeight: 500,
-                textAlign: 'center',
-                color: 'text.primary',
-              }}
-            >
-              {task.name}
-            </Typography>
-          </Box>
 
-          {task.status === 'done' ? (
-            <Typography
-              variant="h6"
-              component="p"
-              sx={{
-                color: 'text.secondary',
-                textAlign: 'center',
-              }}
-            >
-              Выполнено за {formatDurationReadable(completedTimeRef.current || passedSeconds)}
-            </Typography>
-          ) : (
             <Box
               sx={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: 1.5,
                 alignItems: 'center',
-                width: '100%',
-                maxWidth: '600px',
-                px: 2,
+                justifyContent: 'center',
+                gap: 1,
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <Typography
-                  variant="body1"
-                  component="p"
+              {task.status === 'done' && (
+                <CheckIcon
+                  aria-label="Выполнено"
                   sx={{
-                    color: 'text.secondary',
-                    fontSize: '0.95rem',
-                  }}
-                >
-                  Прошло {formatDurationWithSeconds(passedSeconds)}
-                </Typography>
-
-                <Typography
-                  variant="body1"
-                  component="p"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: '0.95rem',
-                  }}
-                >
-                  Осталось {formatDurationWithSeconds(remainingSeconds)}
-                </Typography>
-              </Box>
-
-              <Box sx={{ position: 'relative', width: '100%' }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={Math.min(100, Math.max(0, (passedSeconds / task.duration) * 100))}
-                  sx={{
-                    height: 12,
-                    borderRadius: 6,
+                    fontSize: 32,
+                    color: 'success.main',
                   }}
                 />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: `${Math.min(100, Math.max(0, (passedSeconds / task.duration) * 100))}%`,
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    bgcolor: 'primary.dark',
-                    border: '2px solid',
-                    borderColor: 'background.paper',
-                    zIndex: 1,
-                    transition: 'left 0.3s ease',
-                  }}
-                />
-              </Box>
+              )}
+              <Typography
+                id="task-play-title"
+                variant="h4"
+                component="h1"
+                sx={{
+                  fontWeight: 500,
+                  textAlign: 'center',
+                  color: 'text.primary',
+                }}
+              >
+                {task.name}
+              </Typography>
             </Box>
-          )}
 
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', mt: 2, minHeight: 120 }}>
-            {canGoBack && (
-              <IconButton
-                onClick={onMoveToPrevious}
-                aria-label="Вернуться к предыдущей задаче"
+            {task.status === 'done' ? (
+              <Typography
+                variant="h6"
+                component="p"
                 sx={{
-                  width: 64,
-                  height: 64,
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    bgcolor: 'primary.dark',
-                  },
+                  color: 'text.secondary',
+                  textAlign: 'center',
                 }}
               >
-                <SkipPreviousIcon sx={{ fontSize: 32 }} />
-              </IconButton>
-            )}
-
-            {isPaused && (
-              <IconButton
-                onClick={() => setIsPaused(false)}
-                aria-label="Возобновить таймер"
+                Выполнено за {formatDurationReadable(completedTimeRef.current || passedSeconds)}
+              </Typography>
+            ) : (
+              <Box
                 sx={{
-                  width: 64,
-                  height: 64,
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    bgcolor: 'primary.dark',
-                  },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                  alignItems: 'center',
+                  width: '100%',
+                  maxWidth: '600px',
+                  px: 2,
                 }}
               >
-                <PlayArrowIcon sx={{ fontSize: 32 }} />
-              </IconButton>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <Typography
+                    variant="body1"
+                    component="p"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    Прошло {formatDurationWithSeconds(passedSeconds)}
+                  </Typography>
+
+                  <Typography
+                    variant="body1"
+                    component="p"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: '0.95rem',
+                    }}
+                  >
+                    Осталось {formatDurationWithSeconds(remainingSeconds)}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ position: 'relative', width: '100%' }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min(100, Math.max(0, (passedSeconds / task.duration) * 100))}
+                    sx={{
+                      height: 12,
+                      borderRadius: 6,
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: `${Math.min(100, Math.max(0, (passedSeconds / task.duration) * 100))}%`,
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      bgcolor: 'primary.dark',
+                      border: '2px solid',
+                      borderColor: 'background.paper',
+                      zIndex: 1,
+                      transition: 'left 0.3s ease',
+                    }}
+                  />
+                </Box>
+              </Box>
             )}
 
-            {task.status !== 'done' && !isPaused && (
-              <IconButton
-                onClick={() => setIsPaused(true)}
-                aria-label="Поставить таймер на паузу"
-                sx={{
-                  width: 64,
-                  height: 64,
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    bgcolor: 'primary.dark',
-                  },
-                }}
-              >
-                <PauseIcon sx={{ fontSize: 32 }} />
-              </IconButton>
-            )}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 3,
+                alignItems: 'center',
+                justifyContent: 'center',
+                mt: 2,
+                minHeight: 120,
+              }}
+            >
+              {canGoBack && (
+                <IconButton
+                  onClick={onMoveToPrevious}
+                  aria-label="Вернуться к предыдущей задаче"
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  }}
+                >
+                  <SkipPreviousIcon sx={{ fontSize: 32 }} />
+                </IconButton>
+              )}
 
-            {task.status !== 'done' && (
-              <IconButton
-                onClick={() => {
-                  completedTimeRef.current = passedSeconds;
-                  onMarkComplete(task.id, passedSeconds);
-                }}
-                aria-label="Завершить задачу"
-                sx={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: '50%',
-                  bgcolor: 'success.main',
-                  color: 'success.contrastText',
-                  '&:hover': {
-                    bgcolor: 'success.dark',
-                  },
-                }}
-              >
-                <CheckIcon sx={{ fontSize: 60 }} />
-              </IconButton>
-            )}
+              {isPaused && (
+                <IconButton
+                  onClick={() => setIsPaused(false)}
+                  aria-label="Возобновить таймер"
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  }}
+                >
+                  <PlayArrowIcon sx={{ fontSize: 32 }} />
+                </IconButton>
+              )}
 
-            {showNextButton && (
-              <IconButton
-                onClick={() => {
-                  onMoveToNext();
-                }}
-                aria-label={'Перейти к следующей задаче'}
-                sx={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: '50%',
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  '&:hover': {
-                    bgcolor: 'primary.dark',
-                  },
-                }}
-              >
-                <SkipNextIcon sx={{ fontSize: 60 }} />
-              </IconButton>
-            )}
+              {task.status !== 'done' && !isPaused && (
+                <IconButton
+                  onClick={() => setIsPaused(true)}
+                  aria-label="Поставить таймер на паузу"
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  }}
+                >
+                  <PauseIcon sx={{ fontSize: 32 }} />
+                </IconButton>
+              )}
+
+              {task.status !== 'done' && (
+                <IconButton
+                  onClick={() => {
+                    completedTimeRef.current = passedSeconds;
+                    onMarkComplete(task.id, passedSeconds);
+                  }}
+                  aria-label="Завершить задачу"
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                    color: 'success.contrastText',
+                    '&:hover': {
+                      bgcolor: 'success.dark',
+                    },
+                  }}
+                >
+                  <CheckIcon sx={{ fontSize: 60 }} />
+                </IconButton>
+              )}
+
+              {showNextButton && (
+                <IconButton
+                  onClick={() => {
+                    onMoveToNext();
+                  }}
+                  aria-label={'Перейти к следующей задаче'}
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  }}
+                >
+                  <SkipNextIcon sx={{ fontSize: 60 }} />
+                </IconButton>
+              )}
+            </Box>
           </Box>
         </Box>
       </Box>
