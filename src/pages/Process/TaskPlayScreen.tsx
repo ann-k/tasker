@@ -215,7 +215,8 @@ const TaskPlayScreen = ({
                   textAlign: 'center',
                 }}
               >
-                Выполнено за {formatDurationReadable(completedTimeRef.current || passedSeconds)}
+                Выполнено за{' '}
+                {formatDurationReadable(Math.max(1, completedTimeRef.current || passedSeconds))}
               </Typography>
             ) : (
               <Box
