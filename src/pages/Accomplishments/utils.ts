@@ -3,7 +3,7 @@ import { type AccomplishmentStatuses, type TaskCompletionData, type TaskStatisti
 const STATISTICS_STORAGE_KEY = 'tasker-task-statistics';
 
 // Вычисляем статусы достижений из статистики
-export const getAccomplishmentStatuses = (stats: TaskStatistics): AccomplishmentStatuses => {
+const getAccomplishmentStatuses = (stats: TaskStatistics): AccomplishmentStatuses => {
   const statuses: AccomplishmentStatuses = {};
   for (const achievementId of stats.unlockedAchievements) {
     statuses[achievementId] = true;
@@ -61,7 +61,7 @@ export const loadTaskStatistics = (): TaskStatistics => {
   };
 };
 
-export const saveTaskStatistics = (stats: TaskStatistics): void => {
+const saveTaskStatistics = (stats: TaskStatistics): void => {
   try {
     localStorage.setItem(STATISTICS_STORAGE_KEY, JSON.stringify(stats));
   } catch (error) {
@@ -69,7 +69,7 @@ export const saveTaskStatistics = (stats: TaskStatistics): void => {
   }
 };
 
-export const getTimeOfDay = (date: Date): 'morning' | 'afternoon' | 'evening' => {
+const getTimeOfDay = (date: Date): 'morning' | 'afternoon' | 'evening' => {
   const hours = date.getHours();
   // Вечер: 17:00 - 05:00 (следующего дня)
   if (hours >= 17 || hours < 5) {

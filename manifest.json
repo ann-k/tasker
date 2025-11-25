@@ -1,7 +1,7 @@
 {
-  "name": "React PWA",
-  "short_name": "reactpwa",
-  "description": "Starter kit for modern web applications",
+  "name": "Tasker",
+  "short_name": "Tasker",
+  "description": "Task management tool for kids and parents",
   "theme_color": "#ffffff",
   "icons": [
     {

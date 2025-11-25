@@ -1,5 +1,3 @@
-import welcome from '@/utils/welcome';
-
 import './index.css';
 
 // `root` contains the main dependencies and providers of the base app
@@ -13,6 +11,3 @@ import './index.css';
 Promise.all([import('@/root'), import('@/App')]).then(([{ default: render }, { default: App }]) => {
   render(App);
 });
-
-// welcome message for users in the console
-welcome();

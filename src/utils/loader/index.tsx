@@ -1,8 +1,13 @@
 import Loading from '@/components/Loading';
-import { loader as loaderDefaultOptions } from '@/config';
 
 import asyncComponentLoader from './loader';
 import type { AnyProps, LoadComponent, LoaderDefaultOptions } from './types';
+
+const loaderDefaultOptions = {
+  // no more blinking in your app
+  delay: 300, // if your asynchronous process is finished during 300 milliseconds you will not see the loader at all
+  minimumLoading: 700, // but if it appears, it will stay for at least 700 milliseconds
+};
 
 const configuredAsyncComponentLoader = (
   loadComponent: LoadComponent,
